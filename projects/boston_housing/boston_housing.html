@@ -678,7 +678,8 @@ Ensure that you have executed the code block once you are done. You'll know the 
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The grid search algorithm exhaustively evaluates a given list of values for each parameter.  The Grid Search algorithm is applicable when the number of parameters is relatively small. A large parameter set can have a long running time because of the curse of curse of dimensionality.</p>
+<p>The grid search algorithm is a type of parameter tuning which exhaustively evaluates a model with a given list of parameters searching for an optimal model for every combination of the given the parameters.</p>
+<p>The Grid Search algorithm is applicable when the number of parameters is relatively small. A large parameter set can have a long running time because of the curse of the curse of dimensionality; the number of parameters grows input data the grows exponentially.</p>
 
 </div>
 </div>
@@ -698,7 +699,8 @@ Ensure that you have executed the code block once you are done. You'll know the 
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Cross Validation is a testing method to measure the predictive ability of a model on unseen data. It is preformed on a model by partitioning the data into smaller subsets and of training and testing.  The model is exercised on the developed on the training data the exercised over the test set to determine the effectiveness.  Cross Validation is helpful when using grid search because it can help in selecting the best model through trial over each itteration of the model, this is called tuning.</p>
+<p>Cross Validation is an iterative method of partitioning a data set into multiple training and testing subsets. This process is performed on a model by selecting a partition of data, exercising the model, then averaging the results to determine the effectiveness</p>
+<p>Cross Validation is helpful when using grid search because it can help in selecting the best model through trial over the iterations of the model, this is called tuning.</p>
 
 </div>
 </div>
@@ -1981,7 +1983,9 @@ juNU8P+yaEfyoSaeCgAAAABJRU5ErkJggg==
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>I choose the model with the maximum depth of 6.  Here, as the size of the training set increases the spread in total error between Testing Error and Training errors decreases over the number of data points in the training set. The total error in the training set increases and the total error in the testing set decreases as the two plots begin to converge.</p>
+<p>I choose the model with the maximum depth of 6.</p>
+<p>We can see as the number of data points in the the training set increases total error in testing set starts high at around 100 and decreases towards what appears to be an exponential decay toward a plateau of around 20.</p>
+<p>The total error in Training set subtly increases from 0 to approximately 5 in a flat curve as the Number of data points are added.</p>
 
 </div>
 </div>
@@ -2001,7 +2005,8 @@ juNU8P+yaEfyoSaeCgAAAABJRU5ErkJggg==
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>When the model is using the full training set at max depth 1 it suffers from high bias while at max depth 10 it suffers from high variance.</p>
+<p>When the model is using the full training set at max depth=1 the plot depicts a high bias; this is depicted by the two plots sharing relatively similar high Total Error which quickly decreases as depth is increased.</p>
+<p>When the model is using the full training set at a max depth 10 the graph shows our Training error to be significantly lower than the testing error. At the Max depth = 10 both the Testing Error and the Training error appear to have already plateaued; this is depicting a high variance and likely due to overfitting.</p>
 
 </div>
 </div>
@@ -2404,7 +2409,9 @@ pNP7LTtYb6m6fTPZ6dOtwEvDWL6/takMUQdwElkFclLJrG8AmyTtIiun9Ya0zCvAuyV1kPVuv53m
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>As the max depth increases the testing and training training errors converge around max depth of 2 and then begin to quickly diverge around depth 4. It appears a max depth of 4 best generalizes the dataset because that is where the errors begin to diverge.</p>
+<p>As the max depth increases the testing and training training errors converge around max depth of 2 and then begin to quickly diverge around depth 5.</p>
+<p>It appears a max depth of 5 is the best model to generalize the dataset. Increasing the until a depth to 5 we see a decrease in both Testing and Training error, at the Max depth=5 we see the beginning of a plateau in Testing error while the training error continues to decrease as it has to.</p>
+<p>According to Occam's razor we should use a Max depth=5; this will give us the lowest complexity model where we can still obtain the best generalization of the data.</p>
 
 </div>
 </div>
