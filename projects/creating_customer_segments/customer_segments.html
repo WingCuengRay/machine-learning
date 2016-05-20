@@ -207,7 +207,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[514]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Import libraries necessary for this project</span>
@@ -260,7 +260,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[515]:</div>
+<div class="prompt input_prompt">In&nbsp;[686]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Display a description of the dataset</span>
@@ -387,7 +387,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[532]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># TODO: Select three indices of your choice you wish to sample from the dataset</span>
@@ -486,14 +486,14 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<ol>
-<li><p>Could represent a cafe / sandwich shop, this customers buy a statically very high number of products from the Delicatessen and the other departments which leads me to believe this could be some sort of commercial buyer.</p>
+<ul>
+<li><p><strong><em>0:</em></strong> Could represent a corner store with a Deli, this customers buys very high number of products from most every category, especially Delicatessen, which leads me to believe this could be some sort of a reseller.</p>
 </li>
-<li><p>Could represent a healthy or mostly vegetarian shop. Many of this customer's purchases are from the Fresh department, while a statically lower number of purchases are made from other categories, except for Detergents_Paper which is near the mean.</p>
+<li><p><strong><em>1:</em></strong> Could represent a healthy or mostly vegetarian restaurant. Many of this customer's purchases are from the Fresh department, while a statically lower number of purchases are made from other categories, except for Detergents_Paper which is near the mean.</p>
 </li>
-<li><p>This customer makes significant purchases from the Milk, Grocery, and Detergents_Paper section; yet a very small amount from Fresh, Frozen and Delicatessen I think this type of buyer could represent something like a small hotel that serves a breakfast cereal with coffee in the mornings.</p>
+<li><p><strong><em>2.</em></strong> This customer makes significant purchases from the Milk, Grocery, and Detergents_Paper section; yet a very small amount from Fresh, Frozen and Delicatessen I think this type of buyer could represent something like a small supplier for a specific industry like hotels.</p>
 </li>
-</ol>
+</ul>
 
 </div>
 </div>
@@ -520,7 +520,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[531]:</div>
+<div class="prompt input_prompt">In&nbsp;[43]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.cross_validation</span> <span class="kn">import</span> <span class="n">train_test_split</span>
@@ -534,7 +534,8 @@ div#notebook {
     <span class="n">new_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="n">removed_feature</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># TODO: Split the data into training and testing sets using the given feature as the target</span>
-    <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">[[</span><span class="n">removed_feature</span><span class="p">]],</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+    <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">[[</span><span class="n">removed_feature</span><span class="p">]],</span>
+                                                        <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 
     <span class="c1"># TODO: Create a decision tree regressor and fit it to the training set</span>
     <span class="n">regressor</span> <span class="o">=</span> <span class="n">DecisionTreeRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
@@ -585,7 +586,7 @@ Feaure removed: Delicatessen, Predection Score: -2.2547115372
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>I first attempted to predict the "Grocery" feature and the prediction score was 0.682. This feature has the highest coefficient of determination making "Grocery" a significant feature in identifying the customers's spending habits.</p>
+<p>I first attempted to predict the "Grocery" feature and the prediction score was 0.682. Of all the features "Grocery" has the highest coefficient of determination meaning 68.2% of the information contained within "Grocery" is redundant as it is contained in the other features.  This feature is not necessary in identifying customers' by their spending habits.</p>
 
 </div>
 </div>
@@ -602,7 +603,7 @@ Feaure removed: Delicatessen, Predection Score: -2.2547115372
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[518]:</div>
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Produce a scatter matrix for each pair of features in the data</span>
@@ -2383,7 +2384,7 @@ Ny7+WPF7swAAAABJRU5ErkJggg==
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Looking at the above scatter matrix we can see the best correlations are <strong><em>[{Grocery &amp; Detergents_Paper}, {Grocery &amp; Milk}, {Detergents_Paper, Milk}]</em></strong>.</p>
-<p>This matrix supports my suspicion that the <strong><em>Grocery</em></strong> is in fact a relevant feature, and the feature should not be dropped.  If a feature had to be dropped, I would recomend dropping the Delicatessen feature. This feature has the lowest coefficient of detemination which means it dosen't fit the model very well.</p>
+<p>This scatter matrix and the correlations identified above between <strong><em>Grocery &amp; Milk</em></strong>, and <strong>Grocery &amp; Detergents_Paper</strong> supports my suspicion that the <strong><em>Grocery</em></strong> contains redundant information, making this feature somewhat irrelevant and is the best candidate for removal if a feature needs to be removed.</p>
 <p>None of the plots have a normal distribution, all the feature plots show a positive skew.</p>
 
 </div>
@@ -2416,7 +2417,7 @@ Ny7+WPF7swAAAABJRU5ErkJggg==
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[519]:</div>
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># TODO: Scale the data using the natural logarithm</span>
@@ -6159,7 +6160,7 @@ AAAASUVORK5CYII=
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[520]:</div>
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Display the log-transformed sample data</span>
@@ -6250,7 +6251,7 @@ Once you have performed this implementation, the dataset will be stored in the v
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[521]:</div>
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># For each feature find the data points with extreme high or low values</span>
@@ -6271,7 +6272,7 @@ Once you have performed this implementation, the dataset will be stored in the v
     <span class="k">print</span> <span class="s2">&quot;Data points considered outliers for the feature &#39;{}&#39;:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
     <span class="n">display</span><span class="p">(</span><span class="n">ol</span><span class="p">)</span>
     <span class="n">outliers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ol</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
- <span class="c1"># OPTIONAL: Select the indices for data points you wish to remove</span>
+<span class="c1"># OPTIONAL: Select the indices for data points you wish to remove</span>
   
 <span class="n">outliers</span> <span class="o">=</span>  <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">outliers</span> <span class="k">if</span> <span class="n">outliers</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]))</span>
 <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Outliers that occur in multiple features: {}&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">outliers</span><span class="p">)</span>
@@ -6281,6 +6282,7 @@ Once you have performed this implementation, the dataset will be stored in the v
 
 <span class="c1"># Remove the outliers, if any were specified</span>
 <span class="n">good_data</span> <span class="o">=</span> <span class="n">log_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">log_data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">outliers</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+<span class="c1">#good_data = log_data</span>
 <span class="k">print</span> <span class="n">good_data</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 
@@ -7012,8 +7014,7 @@ Once you have performed this implementation, the dataset will be stored in the v
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The data points that are considered Outliers in multiple features are: [128, 65, 66, 75, 154].  These data points were removed to create a clean data set. Using a clean data set allow data to fit the unsupervised model much better increases the bias and the model is more sensitive to the smaller / clean training set.</p>
-<p>I tested the model with and without the outliers removed and noticed Dimension 3 and Dimension 6 are change radically.</p>
+<p>The data points that are considered Outliers in multiple features are: [128, 65, 66, 75, 154].  These data points are being removed because the impact the accuracy of the predictive models. I tried fitting the model with the outliers in the dataset and without outliers in the data set and found the Silhouette score increased when the outliers are removed.   This indicatesthe data better matches its cluster when the outliers are removed.  The largest negative change in Silhouette score occurs when using the GMM algorithm, which leads me to believe that GMM is more sensitive to outliers than KMeans.</p>
 
 </div>
 </div>
@@ -7045,7 +7046,7 @@ Once you have performed this implementation, the dataset will be stored in the v
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[522]:</div>
+<div class="prompt input_prompt">In&nbsp;[48]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">PCA</span>
@@ -7476,7 +7477,7 @@ p4aRiIiIiIgEPTWMREREREQk6KlhJCIiIiIiQU8NIxERERERCXpqGImIiIiISNBTw0hERERERILe
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[523]:</div>
+<div class="prompt input_prompt">In&nbsp;[49]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Display sample log-data after having a PCA transformation applied</span>
@@ -7564,7 +7565,7 @@ p4aRiIiIiIgEPTWMREREREQk6KlhJCIiIiIiQU8NIxERERERCXpqGImIiIiISNBTw0hERERERILe
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[524]:</div>
+<div class="prompt input_prompt">In&nbsp;[50]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># TODO: Fit PCA to the good data using only two dimensions</span>
@@ -7597,7 +7598,7 @@ p4aRiIiIiIgEPTWMREREREQk6KlhJCIiIiIiQU8NIxERERERCXpqGImIiIiISNBTw0hERERERILe
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[525]:</div>
+<div class="prompt input_prompt">In&nbsp;[51]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Display sample log-data after applying PCA transformation in two dimensions</span>
@@ -7676,9 +7677,9 @@ p4aRiIiIiIgEPTWMREREREQk6KlhJCIiIiIiQU8NIxERERERCXpqGImIiIiISNBTw0hERERERILe
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong><em>K-Means</em></strong> clustering is a good algorithm for exploratory analysis, this works best when the data is clean and forms elliptical clusters, in which data can be categorized into definitive <strong><em>hard clusters</em></strong>. It has good running efficiency and simple to implement, KMeans also works well with a large feature set. KMeans assumes equal probability of data points to cluster, which can be considered either a benefit or a detriment based on the use case and prior knowledge.</p>
-<p><strong><em>Gaussian Mixture Model</em></strong> is good for categorizing data when the number of classes is known and we want a probability as to which cluster the data belongs to.  GMM forms <strong><em>soft clusters</em></strong> which allows data to takes variance and co-variance into account, allowing it to exist in several clusters at the same time.</p>
-<p>Given the fact that we don't know the number of customer segments ahead of processing time I think K-Means is the best use algorithm at this point.</p>
+<p><strong><em>K-Means</em></strong> is a special case of GMM where the variance is the same for all dimensions and all dimensions are independent.  KMeans works well when there is a spherical distribution of data, which data can be categorized into definitive <strong><em>hard clusters</em></strong> this assumes a data point must fit into a single cluster. KMeans assumes equal probability of data points to cluster, which can be considered either a benefit or a detriment based on the use case and prior knowledge. KMeans has good running efficiency and simple to implement, KMeans also works well with a large feature set</p>
+<p><strong><em>Gaussian Mixture Model</em></strong> is good for categorizing data when we want a probability as to which clusters the data belongs to. GMM forms <strong><em>soft clusters</em></strong> which allows data to takes variance and co-variance into account, allowing a data point to exist in several clusters at the same time based on percentage/probability clustering. GMM works with non-spherical clusters with different probabilities.</p>
+<p>Given the fact that we're not concerned with the probability of which cluster a customer belongs too but just the labels I think KMeans is the algorithm best suited to the task.</p>
 
 </div>
 </div>
@@ -7706,51 +7707,66 @@ p4aRiIiIiIgEPTWMREREREQk6KlhJCIiIiIiQU8NIxERERERCXpqGImIiIiISNBTw0hERERERILe
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[526]:</div>
+<div class="prompt input_prompt">In&nbsp;[52]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span><span class="p">,</span> <span class="n">AffinityPropagation</span><span class="p">,</span> <span class="n">MiniBatchKMeans</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span> <span class="nn">sklearn.mixture</span> <span class="kn">import</span> <span class="n">GMM</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">silhouette_score</span> 
 <span class="c1"># TODO: Apply your clustering algorithm of choice to the reduced data </span>
 
 <span class="n">best_score</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="n">best_num_cluster</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">random_state</span> <span class="o">=</span> <span class="mi">42</span>
 
-<span class="k">for</span> <span class="n">num_clusters</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
-    <span class="n">clusterer</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">num_clusters</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
-    <span class="c1">#clusterer = MiniBatchKMeans(init=&#39;k-means++&#39;, n_clusters=num_clusters, </span>
-    <span class="c1">#  batch_size=batch_size, n_init=10, max_no_improvement=10, verbose=0)</span>
-    
-    <span class="n">clusterer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
-    <span class="c1"># TODO: Predict the cluster for each data point</span>
-    <span class="n">preds</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
+<span class="n">Kmeans_clusterer</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+<span class="n">GMM_clusterer</span> <span class="o">=</span> <span class="n">GMM</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
 
-    <span class="c1"># TODO: Find the cluster centers</span>
-    <span class="n">centers</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">cluster_centers_</span>
+<span class="n">clusterers</span> <span class="o">=</span> <span class="p">[</span><span class="n">Kmeans_clusterer</span><span class="p">,</span> <span class="n">GMM_clusterer</span><span class="p">]</span>
 
-    <span class="c1"># TODO: Predict the cluster for each transformed sample data point</span>
-    <span class="n">sample_preds</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">pca_samples</span><span class="p">)</span>
-
-    <span class="c1"># TODO: Calculate the mean silhouette coefficient for the number of clusters chosen</span>
-    <span class="n">pred_score</span> <span class="o">=</span> <span class="n">silhouette_score</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">,</span> <span class="n">preds</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Number of Clusters: {}, Silhouette Score: {}&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">,</span> <span class="n">pred_score</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">pred_score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span> 
-        <span class="n">best_score</span> <span class="o">=</span> <span class="n">pred_score</span>
-        <span class="n">best_num_cluster</span> <span class="o">=</span> <span class="n">num_clusters</span>
-
-
+<span class="k">for</span> <span class="n">clusterer</span> <span class="ow">in</span> <span class="n">clusterers</span><span class="p">:</span>  
+    <span class="k">for</span> <span class="n">num_clusters</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="n">clusterer_name</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
         
-        
+        <span class="k">if</span><span class="p">(</span><span class="n">clusterer_name</span> <span class="o">==</span> <span class="s2">&quot;KMeans&quot;</span><span class="p">):</span>
+            <span class="n">clusterer</span><span class="o">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">num_clusters</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">clusterer_name</span> <span class="o">==</span> <span class="s2">&quot;GMM&quot;</span><span class="p">):</span>
+            <span class="n">clusterer</span><span class="o">.</span><span class="n">n_components</span> <span class="o">=</span> <span class="n">num_clusters</span>
+
+        <span class="n">clusterer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
+        <span class="c1"># TODO: Predict the cluster for each data point</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
+
+        <span class="c1"># TODO: Find the cluster centers</span>
+        <span class="k">if</span> <span class="n">clusterer_name</span> <span class="o">==</span> <span class="s2">&quot;KMeans&quot;</span><span class="p">:</span>
+            <span class="n">centers</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">cluster_centers_</span>
+
+        <span class="c1"># TODO: Predict the cluster for each transformed sample data point</span>
+        <span class="n">sample_preds</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">pca_samples</span><span class="p">)</span>
+
+        <span class="c1"># TODO: Calculate the mean silhouette coefficient for the number of clusters chosen</span>
+        <span class="n">pred_score</span> <span class="o">=</span> <span class="n">silhouette_score</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">,</span> <span class="n">preds</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Clusterer Name: {}, Number of Clusters: {}, Silhouette Score: {}&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">clusterer_name</span><span class="p">,</span> <span class="n">num_clusters</span><span class="p">,</span> <span class="n">pred_score</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pred_score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span> 
+            <span class="n">best_score</span> <span class="o">=</span> <span class="n">pred_score</span>
+            <span class="n">best_num_cluster</span> <span class="o">=</span> <span class="n">num_clusters</span>
+            <span class="n">best_clusterer</span> <span class="o">=</span> <span class="n">clusterer</span>
+
+
 <span class="c1">#overwrite preds for next step</span>
-<span class="n">clusterer</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">best_cluster</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
+<span class="n">clusterer</span> <span class="o">=</span>  <span class="n">best_clusterer</span>
+<span class="n">clusterer</span><span class="o">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">best_num_cluster</span>
+<span class="n">clusterer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
 <span class="n">preds</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">)</span>
 <span class="n">centers</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">cluster_centers_</span>
 <span class="n">score</span> <span class="o">=</span> <span class="n">silhouette_score</span><span class="p">(</span><span class="n">reduced_data</span><span class="p">,</span> <span class="n">preds</span><span class="p">)</span>
 <span class="n">sample_preds</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">pca_samples</span><span class="p">)</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;* Best Score: {}, Number of Clusters: {}&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">best_cluster</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Best Clusterer: {}&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">clusterer</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Best Clusterer Name: {} , Best Score: {}, Number of Clusters: {}&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">best_clusterer</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> 
+                                                                                 <span class="n">score</span><span class="p">,</span> <span class="n">best_num_cluster</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -7763,15 +7779,26 @@ p4aRiIiIiIgEPTWMREREREQk6KlhJCIiIiIiQU8NIxERERERCXpqGImIiIiISNBTw0hERERERILe
 
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Number of Clusters: 2, Silhouette Score: 0.426281015469
-Number of Clusters: 3, Silhouette Score: 0.39689092645
-Number of Clusters: 4, Silhouette Score: 0.331841276009
-Number of Clusters: 5, Silhouette Score: 0.349997797526
-Number of Clusters: 6, Silhouette Score: 0.365885220633
-Number of Clusters: 7, Silhouette Score: 0.364801207979
-Number of Clusters: 8, Silhouette Score: 0.367640756491
-Number of Clusters: 9, Silhouette Score: 0.359879014605
-* Best Score: 0.426281015469, Number of Clusters: 2
+<pre>Clusterer Name: KMeans, Number of Clusters: 2, Silhouette Score: 0.426281015469
+Clusterer Name: KMeans, Number of Clusters: 3, Silhouette Score: 0.39689092645
+Clusterer Name: KMeans, Number of Clusters: 4, Silhouette Score: 0.331841276009
+Clusterer Name: KMeans, Number of Clusters: 5, Silhouette Score: 0.349997797526
+Clusterer Name: KMeans, Number of Clusters: 6, Silhouette Score: 0.365885220633
+Clusterer Name: KMeans, Number of Clusters: 7, Silhouette Score: 0.364801207979
+Clusterer Name: KMeans, Number of Clusters: 8, Silhouette Score: 0.367640756491
+Clusterer Name: KMeans, Number of Clusters: 9, Silhouette Score: 0.359879014605
+Clusterer Name: GMM, Number of Clusters: 2, Silhouette Score: 0.411818864386
+Clusterer Name: GMM, Number of Clusters: 3, Silhouette Score: 0.373560747175
+Clusterer Name: GMM, Number of Clusters: 4, Silhouette Score: 0.331389093566
+Clusterer Name: GMM, Number of Clusters: 5, Silhouette Score: 0.280983407051
+Clusterer Name: GMM, Number of Clusters: 6, Silhouette Score: 0.277981985023
+Clusterer Name: GMM, Number of Clusters: 7, Silhouette Score: 0.322542962762
+Clusterer Name: GMM, Number of Clusters: 8, Silhouette Score: 0.309424058313
+Clusterer Name: GMM, Number of Clusters: 9, Silhouette Score: 0.314964371012
+Best Clusterer: KMeans(copy_x=True, init=&apos;k-means++&apos;, max_iter=300, n_clusters=2, n_init=10,
+    n_jobs=1, precompute_distances=&apos;auto&apos;, random_state=42, tol=0.0001,
+    verbose=0)
+Best Clusterer Name: KMeans , Best Score: 0.426281015469, Number of Clusters: 2
 </pre>
 </div>
 </div>
@@ -7796,16 +7823,24 @@ Number of Clusters: 9, Silhouette Score: 0.359879014605
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>Number of Clusters: 2, Silhouette Score: 0.447157742293</li>
-<li>Number of Clusters: 3, Silhouette Score: 0.36398647984</li>
-<li>Number of Clusters: 4, Silhouette Score: 0.331150954285</li>
-<li>Number of Clusters: 5, Silhouette Score: 0.353193403287</li>
-<li>Number of Clusters: 6, Silhouette Score: 0.363712346094</li>
-<li>Number of Clusters: 7, Silhouette Score: 0.355334447306</li>
-<li>Number of Clusters: 8, Silhouette Score: 0.368991429627</li>
-<li>Number of Clusters: 9, Silhouette Score: 0.367452867107</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 2, Silhouette Score: 0.426281015469</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 3, Silhouette Score: 0.39689092645</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 4, Silhouette Score: 0.331841276009</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 5, Silhouette Score: 0.349997797526</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 6, Silhouette Score: 0.365885220633</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 7, Silhouette Score: 0.364801207979</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 8, Silhouette Score: 0.367640756491</li>
+<li>Clusterer Name: KMeans, Number of Clusters: 9, Silhouette Score: 0.359879014605</li>
+<li>Clusterer Name: GMM, Number of Clusters: 2, Silhouette Score: 0.411818864386</li>
+<li>Clusterer Name: GMM, Number of Clusters: 3, Silhouette Score: 0.373560747175</li>
+<li>Clusterer Name: GMM, Number of Clusters: 4, Silhouette Score: 0.331389093566</li>
+<li>Clusterer Name: GMM, Number of Clusters: 5, Silhouette Score: 0.280983407051</li>
+<li>Clusterer Name: GMM, Number of Clusters: 6, Silhouette Score: 0.277981985023</li>
+<li>Clusterer Name: GMM, Number of Clusters: 7, Silhouette Score: 0.322542962762</li>
+<li>Clusterer Name: GMM, Number of Clusters: 8, Silhouette Score: 0.309424058313</li>
+<li>Clusterer Name: GMM, Number of Clusters: 9, Silhouette Score: 0.314964371012</li>
 </ul>
-<p>The best number of clusters is 2</p>
+<p>The best number of clusters is 2 and the best clustering algorithm is Kmeans</p>
 
 </div>
 </div>
@@ -7822,7 +7857,7 @@ Number of Clusters: 9, Silhouette Score: 0.359879014605
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[527]:</div>
+<div class="prompt input_prompt">In&nbsp;[53]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Display the results of the clustering from implementation</span>
@@ -8606,7 +8641,7 @@ ktQZBiBJkiRJnWEAkiRJktQZBiBJkiRJnfH/l2Cax2CM9zYAAAAASUVORK5CYII=
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[528]:</div>
+<div class="prompt input_prompt">In&nbsp;[54]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># TODO: Inverse transform the centers</span>
@@ -8696,7 +8731,7 @@ ktQZBiBJkiRJnWEAkiRJktQZBiBJkiRJnfH/l2Cax2CM9zYAAAAASUVORK5CYII=
 <li>Segment 0 customers purchases all fall within the second or third quartile, making these regular purchases.  Customers in this segment could represent some kind of retail or resellers; such as a convenience store.  </li>
 </ul>
 <ul>
-<li>Segment 1 customers could represent some kind of a commercial business perhaps a restaurant or cafe. Purchases for Milk, Grocery, Detergents_Paper, and Delicatessen all fall into the fourth quartile range.</li>
+<li>Segment 1 customers could represent some kind of a commercial business perhaps a restaurant or cafe. Purchases for Milk, Grocery, Detergents_Paper, and Delicatessen fall into the fourth quartile range.</li>
 </ul>
 
 </div>
@@ -8715,7 +8750,7 @@ ktQZBiBJkiRJnWEAkiRJktQZBiBJkiRJnfH/l2Cax2CM9zYAAAAASUVORK5CYII=
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[529]:</div>
+<div class="prompt input_prompt">In&nbsp;[676]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Display the predictions</span>
@@ -8803,13 +8838,13 @@ Sample point 2 predicted to be in Cluster 1
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li><strong><em>Sample Point 0</em></strong>  Purchases for Milk, Grocery, Detergents_Paper, and Delicatessen are all statically high which indicates this is consistent with other customers from Segment 1.</li>
+<li><strong><em>Sample Point 0</em></strong>  Purchases for Milk, Grocery, Detergents_Paper, and Delicatessen are all high which indicates this is consistent with other customers from Segment 1.</li>
 </ul>
 <ul>
-<li><strong><em>Sample Point 1</em></strong> purchases a larger quantity of products from Fresh and lower quantity from Frozen but all other are purchases are fairly consistent to the other samples in Segment 0.</li>
+<li><strong><em>Sample Point 1</em></strong> Purchases a large quantity of products from Fresh and lower quantity from Frozen but all other are purchases are fairly consistent to the other samples in Segment 0.</li>
 </ul>
 <ul>
-<li><strong><em>Sample Point 2</em></strong> This customer is somewhat of an outlier but shares some of the purchasing behaviors with other customers from Segment 1.  This customer purchases a low amount from the Fresh, Frozen sections yet a very high amount from Grocery, Milk, and Detergents_paper which is consistent with other customers from Segment 1. </li>
+<li><strong><em>Sample Point 2</em></strong> This customer is somewhat of an outlier but shares the purchasing behaviors with other customers from Segment 1.  This customer purchases a low amount from the Fresh, Frozen sections yet a very high amount from Grocery, Milk, and Detergents_paper which is consistent with other customers from Segment 1. </li>
 </ul>
 
 </div>
@@ -8861,7 +8896,7 @@ Sample point 2 predicted to be in Cluster 1
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>If labels could be applied data could be obtained before processing a supervised learner could then be used to predict a new feature for the customers.</p>
+<p>The cluster labels we have determined with our unsupervised algorithm could be added to assist in supervised learning analysis.  These cluster labels could then be used along with the other six product features to predict a new feature for the customer.</p>
 
 </div>
 </div>
@@ -8879,7 +8914,7 @@ Sample point 2 predicted to be in Cluster 1
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[530]:</div>
+<div class="prompt input_prompt">In&nbsp;[55]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># Display the clustering results based on &#39;Channel&#39; data</span>
