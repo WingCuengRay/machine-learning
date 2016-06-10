@@ -77,7 +77,7 @@ class LearningAgent(Agent):
         q_val = self.q.get((state, action), 0.0)
         return q_val
 
-    def learn_Q(self, state, action, reward, value):
+    def learn_Q(self, prev_state, action, reward, value):
         print("Learning:", value)
         prev_val = self.q.get((state, action), None)
         if prev_val is None:
@@ -90,7 +90,6 @@ class LearningAgent(Agent):
         return reward+self.discount*max_q_new
 
     def update(self, t):
-        #clear()
         # Gather inputs
         self.next_waypoint = self.planner.next_waypoint()  # from route planner, also displayed by simulator
         inputs = self.env.sense(self)
