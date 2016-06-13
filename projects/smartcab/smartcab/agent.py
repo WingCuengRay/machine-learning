@@ -2,15 +2,11 @@ import random
 from environment import Agent, Environment
 from planner import RoutePlanner
 from simulator import Simulator
-
-#import matplotlib.pyplot as plt
-#import os
-#clear = lambda: os.system('clear')
+#import matplotlib.pyplot as plt #used for analysis only!
 
 class LearningAgent(Agent):
     """An agent that learns to drive in the smartcab world."""
-
-    def __init__(self, env, epsilon=1, learning_rate = 0.25, discount = 0.9):
+    def __init__(self, env, epsilon=.5, learning_rate = 0.6, discount = 0.4):
         super(LearningAgent, self).__init__(env)  # sets self.env = env, state = None, next_waypoint = None, and a default color
         self.color = 'red'  # override color
         self.planner = RoutePlanner(self.env, self)  # simple route planner to get next_waypoint
@@ -20,125 +16,130 @@ class LearningAgent(Agent):
         self.epsilon = epsilon
         self.learning_rate = learning_rate
         self.discount = discount
-        
-        self.last_state = None #Memoize last state
-        self.last_action = None #Memoize last action
-
-        self.trial_reward = 0
-        self.trial_steps = 0
-        self.failed_trials = 0
-        self.passed_trials = 0
-        self.trail_rewards = []
+        #Used for analysis
+        self.trail_rewards = [] #log of all episodes in a 2d array[[penalty, reward]]
+        self.failed_trials = 0  #number of failed trials
+        self.passed_trials = 0  #number of passed trials
 
     def reset(self, destination=None):
+        '''called before each episode'''
         self.planner.route_to(destination)
-        if(self.trial_steps >= self.env.get_deadline(self) ):
-            #print("\033[0;31mFAIL Steps To Complete = {}, Deadline = {} \033[0m").format(self.trial_steps, self.env.get_deadline(self))
-            self.failed_trials = self.failed_trials +1
-        else:
-            #print("\033[0;32mPASS Steps To Complete = {}, Deadline = {} \033[0m").format(self.trial_reward, self.trial_steps, self.env.get_deadline(self))
-            self.passed_trials = self.passed_trials +1
-        #draw_Q_table(self)
-        self.trail_rewards.append(self.trial_reward)
-
-        self.last_state = None #Memoize last state
-        self.last_action = None #Memoize last action
-        
-        self.trial_reward = 0
-        self.trial_steps =  0
-        # TODO: Prepare for a new trip; reset any variables here, if required
-
-    def choose_action(self, state):
-        epsilon = self.get_epsilon_decay()
-        if random.random() < epsilon: #Shake the dice
-            direction = self.random_direction() #Used for exploring the enviroment
-        else:
-            direction =  self.greedy_direction(state) #Pick the best value for Q - Greedy action
-        return direction
+        '''reset values after each episode'''
+        self.trial_penalty = 0 #points gained for single episode
+        self.trial_reward = 0  #points lost for a single episode
 
     def get_epsilon_decay(self):
-        return float(self.epsilon) / (self.trial_steps + float(self.epsilon))
+        '''decays epislon value over time. Used to promote exploration in 
+           earlier episodes.'''
+        return float(self.epsilon) / (len(self.trail_rewards) + float(self.epsilon))
 
-    def random_direction(self):
+    def random_action(self):
+        '''returns a random action, which increases our explored states.'''
         random_direction = random.choice(self.directions)
         return random_direction
 
-    def greedy_direction(self, state):
-        q = [self.get_Q_val(state, a) for a in self.directions]
-        maxQ = max(q)
-        if q.count(maxQ) > 1: #existing value
-            best = [i for i in range(len(self.directions)) if q[i] == maxQ]
-            i = random.choice(best)
+    def greedy_action(self, state):
+        '''returns the actions with the best known q value for a given state.'''
+        q_vals = [self.get_Q_val(state, action) for action in self.directions]
+        max_q_val = max(q_vals)
+        if q_vals.count(max_q_val) > 1: #mult existing values
+            best = [i for i in range(len(self.directions)) if q_vals[i] == max_q_val]
+            direction_idx = random.choice(best)
         else:
-            i = q.index(maxQ)
-        return self.directions[i]
+            direction_idx = q_vals.index(max_q_val)
+        return self.directions[direction_idx]
+
+    def choose_action(self, state):
+        '''decide if we should take a random action or a greedy action.'''
+        epsilon = self.get_epsilon_decay()
+        if random.random() < epsilon: #Roll the dice
+            action = self.random_action() #Used for exploring the enviroment
+        else:
+            action =  self.greedy_action(state) #Pick the best value for Q - Greedy action
+        return action
 
     def get_Q_val(self, state, action):
+        '''Util to get a q value for a given state and action pair.'''
         q_val = self.q.get((state, action), 0.0)
         return q_val
 
-    def learn_Q(self, prev_state, action, reward, value):
-        print("Learning:", value)
-        prev_val = self.q.get((state, action), None)
-        if prev_val is None:
-             self.q[(state, action)] = reward
-        else:
-             self.q[(state, action)] = prev_val + self.learning_rate * (value - prev_val)
+    def set_Q_val(self, state, action, value):
+        '''Util to set a q value for a given state and action pair.'''
+        self.q[(state, action)] = value
 
-    def discounted_estimate_next_state(self, reward):
-        max_q_new = max([self.get_Q_val(self.last_state, direction) for direction in self.directions])  
-        return reward+self.discount*max_q_new
+    def discounted_state_estiamte(self, state, reward):
+        '''generates a discounted max value used to slightly update our q val look up.'''       
+        max_q_new = max([self.get_Q_val(state, direction) for direction in self.directions])  
+        return reward + self.discount * max_q_new
+
+    def learn_Q(self, state, action, reward):
+        '''determine q val and update lookup.'''
+        if state is not None:
+            prev_val = self.q.get((state, action), None)
+            if prev_val is None:
+                new_val = reward
+            else:
+                util_value = self.discounted_state_estiamte(state, reward)
+                '''moves the new q val slightly in direction of new value'''
+                new_val = prev_val + self.learning_rate * (util_value - prev_val)
+            self.set_Q_val(state, action, new_val)
 
     def update(self, t):
-        # Gather inputs
+        '''main program loop called at the begining of each state.'''
         self.next_waypoint = self.planner.next_waypoint()  # from route planner, also displayed by simulator
-        inputs = self.env.sense(self)
-        deadline = self.env.get_deadline(self)
+        inputs = self.env.sense(self)# Gather inputs to create state
+    
+        '''Update state: Important variables for state are light, oncoming, and left, 
+           right is not required as driver can turn right on red without penalty.'''
+        self.state = (self.next_waypoint, inputs['light'], inputs['oncoming'], inputs['left'])
 
-        # TODO: Update state
-        ''' Important variables for state are light, oncoming, and left, right is not required as 
-            driver can turn right on red without penalty '''
-        self.current_state = (self.next_waypoint, inputs['light'], inputs['oncoming'], inputs['left'])
-        self.trial_steps = t #used only for performance analysis.
-        print("Current State", self.current_state)
-        # TODO: Select action according to your policy
-        action = self.choose_action(self.current_state)
-        # Execute action and get reward
+        #Select action according to your policy
+        action = self.choose_action(self.state)
+
+        #Execute action and get reward
         reward = self.env.act(self, action)
-        self.trial_reward += reward
-        print("Previous State:", self.last_state)
-        
-        # TODO: Learn policy based on state, action, reward
-        if self.last_state is not None:
-            self.learn_Q(self.current_state, action, reward, self.discounted_estimate_next_state(reward))
 
-        #update memoized last state and action.
-        self.last_state = self.current_state
-        
-        #print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(
-        #   deadline, inputs, action, reward)  # [debug]
-        
+        #Learn policy based on state, action, reward
+        self.learn_Q(self.state, action, reward)
+
+        '''Logging for analysis of the agent.'''
+        #if the reward is negative we consider it a penalty
+        if reward < 0: 
+            self.trial_penalty += reward
+        else:
+            self.trial_reward += reward
+        #determine if the agent has reached the destination within the number of alloted steps.'''
+        if(self.env.done == True):
+            self.passed_trials += 1
+            self.trail_rewards.append([self.trial_penalty, self.trial_reward])
+        elif(self.env.get_deadline(self) <= 0):
+            self.failed_trials += 1
+            self.trail_rewards.append([self.trial_penalty, self.trial_reward])
+
+    #end of LearningAgent
+ 
 def draw_Q_table(agent):
     #print learned states
     for state, action in agent.q:
-        print("State: (Next Waypoint: {}, Light: {}, Oncoming: {}, Left: {})  Action: {}, Reward {}").format(state[0], state[1], state[2], state[3], action, agent.get_Q_val(state, action))
+        print("State: (Next Waypoint: {}, Light: {}, Oncoming: {}, Left: {})  Action: {}, Reward {}").format(
+            state[0], state[1], state[2], state[3], action, agent.get_Q_val(state, action))
     print("\n")
 
-def draw_reward_chart(chart_data_array):
+def draw_chart(chart_data_array):
     print(chart_data_array)
     plt.plot(chart_data_array)
     plt.show()
     #print("draw_reward_chart called", chart_data_array)
 
-def draw_pass_chart(chart_data_array):
-    print(chart_data_array)
-    plt.plot(chart_data_array)
-    plt.show()
-    #print("draw_reward_chart called", chart_data_array)
+def mean_reward(two_d_array):
+    '''Calculate the mean reward by adding together the rewards and the penalties'''
+    reward_tot = 0
+    for reward in two_d_array:
+        reward_tot += reward[0]+reward[1]
+    return reward_tot/len(two_d_array) 
 
 def run():
     """Run the agent for a finite number of trials."""
-
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
     a = e.create_agent(LearningAgent)  # create agent
@@ -148,13 +149,14 @@ def run():
     # Now simulate it
     sim = Simulator(e, update_delay=0.0, display=False)  # create simulator (uses pygame when display=True, if available)
     # NOTE: To speed up simulation, reduce update_delay and/or set display=False
-
+    
     sim.run(n_trials=100)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
+    pass_rate = (float(a.passed_trials)/ float(len(a.trail_rewards)))*len(a.trail_rewards)
 
-    #draw_reward_chart(self.trail_rewards)
-    pass_rate = float(a.passed_trials)/ float(len(a.trail_rewards)+1)
-    print("Pass Rate:", pass_rate)
+    #Print stats after running a finite number of trials.
+    print("Learning Rate: {}, Discount Rate: {}, Epsilon {}, Pass Rate: {}%, Explored States: {}, Mean Reward: {}, Number of Trials: {}").format(
+        a.learning_rate, a.discount, a.epsilon, pass_rate, len(a.q), mean_reward(a.trail_rewards), len(a.trail_rewards))
 
 if __name__ == '__main__':
     run()
