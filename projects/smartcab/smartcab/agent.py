@@ -6,7 +6,7 @@ from simulator import Simulator
 
 class LearningAgent(Agent):
     """An agent that learns to drive in the smartcab world."""
-    def __init__(self, env, epsilon=.5, learning_rate = 0.6, discount = 0.4):
+    def __init__(self, env, epsilon=.5, learning_rate = 0.6, discount_factor = 0.4):
         super(LearningAgent, self).__init__(env)  # sets self.env = env, state = None, next_waypoint = None, and a default color
         self.color = 'red'  # override color
         self.planner = RoutePlanner(self.env, self)  # simple route planner to get next_waypoint
@@ -15,23 +15,23 @@ class LearningAgent(Agent):
         #Defaults used for setting weights
         self.epsilon = epsilon
         self.learning_rate = learning_rate
-        self.discount = discount
+        self.discount_factor = discount_factor
         #Used for analysis
-        self.trail_rewards = [] #log of all episodes in a 2d array[[penalty, reward]]
+        self.trial_rewards = [] #log of all episodes in a 2d array[[penalty, reward]]
         self.failed_trials = 0  #number of failed trials
         self.passed_trials = 0  #number of passed trials
 
     def reset(self, destination=None):
         '''called before each episode'''
         self.planner.route_to(destination)
-        '''reset values after each episode'''
+        #reset values after each episode
         self.trial_penalty = 0 #points gained for single episode
         self.trial_reward = 0  #points lost for a single episode
 
     def get_epsilon_decay(self):
         '''decays epislon value over time. Used to promote exploration in 
            earlier episodes.'''
-        return float(self.epsilon) / (len(self.trail_rewards) + float(self.epsilon))
+        return float(self.epsilon) / (len(self.trial_rewards) + float(self.epsilon))
 
     def random_action(self):
         '''returns a random action, which increases our explored states.'''
@@ -67,10 +67,10 @@ class LearningAgent(Agent):
         '''Util to set a q value for a given state and action pair.'''
         self.q[(state, action)] = value
 
-    def discounted_state_estiamte(self, state, reward):
+    def learned_value(self, state, reward):
         '''generates a discounted max value used to slightly update our q val look up.'''       
         max_q_new = max([self.get_Q_val(state, direction) for direction in self.directions])  
-        return reward + self.discount * max_q_new
+        return reward + self.discount_factor * max_q_new
 
     def learn_Q(self, state, action, reward):
         '''determine q val and update lookup.'''
@@ -79,9 +79,9 @@ class LearningAgent(Agent):
             if prev_val is None:
                 new_val = reward
             else:
-                util_value = self.discounted_state_estiamte(state, reward)
-                '''moves the new q val slightly in direction of new value'''
-                new_val = prev_val + self.learning_rate * (util_value - prev_val)
+                learned_val = self.learned_value(state, reward)
+                #moves the new q val slightly in direction of new value
+                new_val = prev_val + (self.learning_rate * (learned_val - prev_val))
             self.set_Q_val(state, action, new_val)
 
     def update(self, t):
@@ -111,11 +111,11 @@ class LearningAgent(Agent):
         #determine if the agent has reached the destination within the number of alloted steps.'''
         if(self.env.done == True):
             self.passed_trials += 1
-            self.trail_rewards.append([self.trial_penalty, self.trial_reward])
+            self.trial_rewards.append([self.trial_penalty, self.trial_reward])
         elif(self.env.get_deadline(self) <= 0):
             self.failed_trials += 1
-            self.trail_rewards.append([self.trial_penalty, self.trial_reward])
-
+            #print("Failed Trial", len(self.trial_rewards))
+            self.trial_rewards.append([self.trial_penalty, self.trial_reward])
     #end of LearningAgent
  
 def draw_Q_table(agent):
@@ -149,14 +149,15 @@ def run():
     # Now simulate it
     sim = Simulator(e, update_delay=0.0, display=False)  # create simulator (uses pygame when display=True, if available)
     # NOTE: To speed up simulation, reduce update_delay and/or set display=False
-    
+
     sim.run(n_trials=100)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
-    pass_rate = (float(a.passed_trials)/ float(len(a.trail_rewards)))*len(a.trail_rewards)
-
+    pass_rate = (float(a.passed_trials)/ float(len(a.trial_rewards)))*len(a.trial_rewards)
+    #print(a.trial_rewards)
     #Print stats after running a finite number of trials.
-    print("Learning Rate: {}, Discount Rate: {}, Epsilon {}, Pass Rate: {}%, Explored States: {}, Mean Reward: {}, Number of Trials: {}").format(
-        a.learning_rate, a.discount, a.epsilon, pass_rate, len(a.q), mean_reward(a.trail_rewards), len(a.trail_rewards))
+    print("Learning Rate: {}, Discount Factor: {}, Epsilon {}, Pass Rate: {}%, Explored States: {}, Mean Reward: {}, Number of Trials: {}").format(
+        a.learning_rate, a.discount_factor, a.epsilon, pass_rate, len(a.q), mean_reward(a.trial_rewards), len(a.trial_rewards))
+
 
 if __name__ == '__main__':
     run()
