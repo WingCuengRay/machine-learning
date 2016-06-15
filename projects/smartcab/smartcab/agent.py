@@ -69,20 +69,21 @@ class LearningAgent(Agent):
 
     def learned_value(self, state, reward):
         '''generates a discounted max value used to slightly update our q val look up.'''       
-        max_q_new = max([self.get_Q_val(state, direction) for direction in self.directions])  
+        #estimate of the optimal future Q-value for the new_state
+        max_q_new = max([self.get_Q_val(state, direction) for direction in self.directions])
         return reward + self.discount_factor * max_q_new
 
-    def learn_Q(self, state, action, reward):
+    def learn_Q(self, prev_state, action, reward, new_state):
         '''determine q val and update lookup.'''
-        if state is not None:
-            prev_val = self.q.get((state, action), None)
+        if prev_state is not None:
+            prev_val = self.q.get((prev_state, action), None)
             if prev_val is None:
                 new_val = reward
             else:
-                learned_val = self.learned_value(state, reward)
+                learned_val = self.learned_value(new_state, reward)
                 #moves the new q val slightly in direction of new value
                 new_val = prev_val + (self.learning_rate * (learned_val - prev_val))
-            self.set_Q_val(state, action, new_val)
+            self.set_Q_val(prev_state, action, new_val)
 
     def update(self, t):
         '''main program loop called at the begining of each state.'''
@@ -99,8 +100,12 @@ class LearningAgent(Agent):
         #Execute action and get reward
         reward = self.env.act(self, action)
 
-        #Learn policy based on state, action, reward
-        self.learn_Q(self.state, action, reward)
+        #get the new state after taking the action
+        inputs = self.env.sense(self)
+        new_state = (self.next_waypoint, inputs['light'], inputs['oncoming'], inputs['left'])
+
+        #Learn policy based on state, action, reward, new_state
+        self.learn_Q(self.state, action, reward, new_state)
 
         '''Logging for analysis of the agent.'''
         #if the reward is negative we consider it a penalty
