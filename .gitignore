@@ -63,3 +63,7 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+#Capstone Data
+/projects/capstone/data
+*.npy
