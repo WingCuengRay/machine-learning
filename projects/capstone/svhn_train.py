@@ -1,19 +1,22 @@
+import cv2
 import numpy as np
 import tensorflow as tf
-from data import load_minst_data
+import svhn_data
+
 from pdb import set_trace as bp
 
-img_rows = 28
-img_cols = 28
+img_rows = 32
+img_cols = 32
 NUM_LABELS = 10
-NUM_CHANNELS = 1 # grayscale
+NUM_CHANNELS = 3 # grayscale
 patch_size = 5
 depth = 32
 num_hidden = 64
 batch_size = 64
 num_steps = 10000
-SEED = None
 data_type = tf.float32
+SEED = None
+
 
 def accuracy(predictions, labels):
 	return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
@@ -39,7 +42,6 @@ def predict(graph, train_dataset, valid_prediction, test_prediction,
 					valid_prediction.eval(), valid_labels))
 		print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(), test_labels))
 
-
 def train(graph, train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels):
 	with graph.as_default():
 		# Input data.
@@ -48,32 +50,7 @@ def train(graph, train_dataset, train_labels, valid_dataset, valid_labels, test_
 		tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, NUM_LABELS))
 		tf_valid_dataset = tf.constant(valid_dataset)
 		tf_test_dataset = tf.constant(test_dataset)
-	  
-		# # Variables.
-		# layer1_weights = tf.Variable(tf.truncated_normal(
-		# 	[patch_size, patch_size, num_channels, depth], stddev=0.1))
-		# layer1_biases = tf.Variable(tf.zeros([depth]))
-		# layer2_weights = tf.Variable(tf.truncated_normal(
-		# 	[patch_size, patch_size, depth, depth], stddev=0.1))
-		# layer2_biases = tf.Variable(tf.constant(1.0, shape=[depth]))
-		# layer3_weights = tf.Variable(tf.truncated_normal(
-		# 	[img_rows // 4 * img_cols // 4 * depth, num_hidden], stddev=0.1))
-		# layer3_biases = tf.Variable(tf.constant(1.0, shape=[num_hidden]))
-		# layer4_weights = tf.Variable(tf.truncated_normal(
-		# 	[num_hidden, num_labels], stddev=0.1))
-		# layer4_biases = tf.Variable(tf.constant(1.0, shape=[num_labels]))
-	  
-		# # Model.
-		# def model(data):
-		# 	conv = tf.nn.conv2d(data, layer1_weights, [1, 2, 2, 1], padding='SAME')
-		# 	hidden = tf.nn.relu(conv + layer1_biases)
-		# 	conv = tf.nn.conv2d(hidden, layer2_weights, [1, 2, 2, 1], padding='SAME')
-		# 	hidden = tf.nn.relu(conv + layer2_biases)
-		# 	shape = hidden.get_shape().as_list()
-		# 	reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
-		# 	hidden = tf.nn.relu(tf.matmul(reshape, layer3_weights) + layer3_biases)
-		# 	return tf.matmul(hidden, layer4_weights) + layer4_biases
-############################################
+
   		# The variables below hold all the trainable weights. They are passed an
   		# initial value which will be assigned when we call:
   		# {tf.initialize_all_variables().run()}
@@ -132,7 +109,7 @@ def train(graph, train_dataset, train_labels, valid_dataset, valid_labels, test_
 			if train:
 				hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
 			return tf.matmul(hidden, fc2_weights) + fc2_biases
-############################################
+
 		logits = model(tf_train_dataset)
 		loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
 	
@@ -151,9 +128,11 @@ def t_p(train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, 
 		graph, train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels)
 	predict(graph, train_dataset, valid_prediction, test_prediction, train_labels, valid_labels, 
 		test_labels, tf_train_dataset, tf_train_labels, optimizer, loss, train_prediction)
-
 if __name__ == '__main__':
-	train_dataset, train_labels = load_minst_data("training")
-	test_dataset, test_labels = load_minst_data("testing")
-	valid_dataset, valid_labels = load_minst_data("validation")
-	t_p(train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels)
+	train_X, train_y = svhn_data.load_svhn_data("training")
+	valid_X, valid_y = svhn_data.load_svhn_data("validation")
+	test_X, test_y = svhn_data.load_svhn_data("testing")
+	# train_X, train_y  = reformat(train_X, train_y )
+	# valid_X, valid_y = reformat(valid_X, valid_y)
+	# test_X, test_y = reformat(test_X, test_y)
+	t_p(train_X, train_y, valid_X, valid_y, test_X, test_y)

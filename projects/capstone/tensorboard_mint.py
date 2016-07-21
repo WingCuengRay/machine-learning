@@ -10,7 +10,7 @@ NUM_CHANNELS = 1 # grayscale
 patch_size = 5
 depth = 32
 num_hidden = 64
-batch_size = 64
+batch_size = 128
 num_steps = 10000
 SEED = None
 data_type = tf.float32
@@ -18,6 +18,19 @@ data_type = tf.float32
 def accuracy(predictions, labels):
 	return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
 		/ predictions.shape[0])
+
+def variable_summaries(var, name):
+  """Attach a lot of summaries to a Tensor."""
+  with tf.name_scope('summaries'):
+    mean = tf.reduce_mean(var)
+    tf.scalar_summary('mean/' + name, mean)
+    with tf.name_scope('stddev'):
+      stddev = tf.sqrt(tf.reduce_sum(tf.square(var - mean)))
+    tf.scalar_summary('sttdev/' + name, stddev)
+    tf.scalar_summary('max/' + name, tf.reduce_max(var))
+    tf.scalar_summary('min/' + name, tf.reduce_min(var))
+    tf.histogram_summary(name, var)
+
 
 def predict(graph, train_dataset, valid_prediction, test_prediction, 
 		train_labels, valid_labels, test_labels, tf_train_dataset,
@@ -48,31 +61,7 @@ def train(graph, train_dataset, train_labels, valid_dataset, valid_labels, test_
 		tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, NUM_LABELS))
 		tf_valid_dataset = tf.constant(valid_dataset)
 		tf_test_dataset = tf.constant(test_dataset)
-	  
-		# # Variables.
-		# layer1_weights = tf.Variable(tf.truncated_normal(
-		# 	[patch_size, patch_size, num_channels, depth], stddev=0.1))
-		# layer1_biases = tf.Variable(tf.zeros([depth]))
-		# layer2_weights = tf.Variable(tf.truncated_normal(
-		# 	[patch_size, patch_size, depth, depth], stddev=0.1))
-		# layer2_biases = tf.Variable(tf.constant(1.0, shape=[depth]))
-		# layer3_weights = tf.Variable(tf.truncated_normal(
-		# 	[img_rows // 4 * img_cols // 4 * depth, num_hidden], stddev=0.1))
-		# layer3_biases = tf.Variable(tf.constant(1.0, shape=[num_hidden]))
-		# layer4_weights = tf.Variable(tf.truncated_normal(
-		# 	[num_hidden, num_labels], stddev=0.1))
-		# layer4_biases = tf.Variable(tf.constant(1.0, shape=[num_labels]))
-	  
-		# # Model.
-		# def model(data):
-		# 	conv = tf.nn.conv2d(data, layer1_weights, [1, 2, 2, 1], padding='SAME')
-		# 	hidden = tf.nn.relu(conv + layer1_biases)
-		# 	conv = tf.nn.conv2d(hidden, layer2_weights, [1, 2, 2, 1], padding='SAME')
-		# 	hidden = tf.nn.relu(conv + layer2_biases)
-		# 	shape = hidden.get_shape().as_list()
-		# 	reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
-		# 	hidden = tf.nn.relu(tf.matmul(reshape, layer3_weights) + layer3_biases)
-		# 	return tf.matmul(hidden, layer4_weights) + layer4_biases
+
 ############################################
   		# The variables below hold all the trainable weights. They are passed an
   		# initial value which will be assigned when we call:

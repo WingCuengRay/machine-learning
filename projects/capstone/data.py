@@ -4,16 +4,19 @@ from scipy import ndimage
 from sklearn.cross_validation import train_test_split
 
 '''for debugging'''
-#import cv2
 #from pdb import set_trace as bp
 #import matplotlib.pyplot as plt
 #from random import randint
 
-data_path = "data"
+path = "data/minst_digit"
 pixel_depth = 255
+NUM_LABELS = 10
+
+def labels_to_one_hot(labels):
+  labels = (np.arange(NUM_LABELS) == labels[:,None]).astype(np.float32)
+  return labels
 
 def get_dataset_by_name(data_set_name):
-	path = data_path+"/minst_digit"
 	if data_set_name == "training":	
 		img_file = os.path.join(path, 'train-images-idx3-ubyte') 
 		lbl_file = os.path.join(path, 'train-labels-idx1-ubyte')
@@ -32,16 +35,17 @@ def read_image_file_to_array(file_name):
 
 def process_img_file(file):
 	magic, num, rows, cols = struct.unpack(">IIII", file.read(16))
-	print(rows, cols)
-	data_array = (np.fromfile(file, dtype=np.uint8).reshape(num, rows, cols).astype(float) - pixel_depth / 2) / pixel_depth
-	print(data_array)
-	#image_data = (ndimage.imread(image_file).astype(float) - pixel_depth / 2) / pixel_depth
+	data_array = (np.fromfile(file, dtype=np.uint8).reshape(num, rows, cols).astype(np.float32) - pixel_depth / 2) / pixel_depth
+	print("das1:", data_array.shape)
+	data_array = data_array.reshape((-1, rows*cols*1)).astype(np.float32)
+	print("das2:", data_array.shape)
 	return data_array
 
 def read_label_file_to_array(file_name):
 	file = open(file_name, 'rb')
 	magic, n = struct.unpack('>II', file.read(8))
 	labels = np.fromfile(file, dtype=np.uint8)
+	labels = labels_to_one_hot(labels)
 	file.close()
 	return labels
 
@@ -72,31 +76,29 @@ def train_validation_spit(train_dataset, train_labels):
   return train_dataset, validation_dataset, train_labels, validation_labels
 
 def write_npy_file(data_array, lbl_array, data_set_name):
-	np.save(data_set_name+'_imgs.npy', data_array)
-	print 'Saving to %s_imgs.npy file done. Data size is: %d %d %d' %((data_set_name), data_array.shape[0], data_array.shape[1], data_array.shape[2])
-	np.save(data_set_name+'_labels.npy', lbl_array)
+	np.save(os.path.join(path, data_set_name+'_imgs.npy'), data_array)
+	print 'Saving to %s_imgs.npy file done. Data size is: %s' %((data_set_name), data_array.shape)
+	np.save(os.path.join(path, data_set_name+'_labels.npy'), lbl_array)
 	print 'Saving to %s_labels.npy file done. Contains %d rows' %(data_set_name, len(lbl_array))
 
-def load_minst_data(data_type):
+def load_mnist_data(data_type):
 	if data_type == "training":
-		imgs = np.load('training_imgs.npy')
-		labels = np.load('training_labels.npy')
+		imgs = np.load(os.path.join(path, 'training_imgs.npy'))
+		labels = np.load(os.path.join(path, 'training_labels.npy'))
 	elif data_type == "testing":
-		imgs = np.load('testing_imgs.npy')
-		labels = np.load('testing_labels.npy')
+		imgs = np.load(os.path.join(path, 'testing_imgs.npy'))
+		labels = np.load(os.path.join(path, 'testing_labels.npy'))
 	elif(data_type == "validation"):
-		imgs = np.load('validation_imgs.npy')
-		labels = np.load('validation_labels.npy')
+		imgs = np.load(os.path.join(path, 'validation_imgs.npy'))
+		labels = np.load(os.path.join(path, 'validation_labels.npy'))
 	else:
 		raise Exception("Data Set not found!")
 	return imgs, labels
 
 def show_test(data_set_name):
 	imgs_train, labels_train = load_minst_data("training")
-	print(imgs_train.shape, labels_train.shape)
 	random_idx = randint(0, len(imgs_train))
 	plt.imshow(imgs_train[random_idx], cmap="Greys")
-	print("Label:",labels_train[random_idx])
 	plt.show()
 
 if __name__ == '__main__':
