@@ -31,7 +31,7 @@ from svhn_data import load_svhn_data
 
 learning_rate = .001
 drop_out = 0.9
-max_steps = 1000
+max_steps = 2000
 data_dir = '/tmp/data'
 summaries_dir = '/tmp/svhn_logs'
 IMG_ROWS = 32
@@ -40,20 +40,13 @@ NUM_CHANNELS = 3
 NUM_LABELS = 10
 BATCH_SIZE = 512
 
-# train_X, train_y = load_mnist_data("training")
-# valid_X, valid_y = load_mnist_data("validation")
-# test_X, test_y = load_mnist_data("testing")
 
 train_X, train_y = load_svhn_data("training")
 valid_X, valid_y = load_svhn_data("validation")
 test_X, test_y = load_svhn_data("testing")
 
-
 def train(x, y_):
   # Create a multilayer model.
-  with tf.name_scope('input_reshape'):
-    image_shaped_input = tf.reshape(x, [-1, IMG_ROWS, IMG_COLS, NUM_CHANNELS])
-    tf.image_summary('input', image_shaped_input, 100)
 
   # We can't initialize these variables to 0 - the network will get stuck.
   def weight_variable(shape):
@@ -130,7 +123,6 @@ def train(x, y_):
 def predict(accuracy, x, y_, keep_prob, train_step):
   #mnist = input_data.read_data_sets(data_dir, one_hot=True)
   # Merge all the summaries and write them out to /tmp/mnist_logs (by default)
-  
   with tf.Session() as sess:
     merged = tf.merge_all_summaries()
     train_writer = tf.train.SummaryWriter(summaries_dir + '/train',sess.graph)
@@ -139,6 +131,7 @@ def predict(accuracy, x, y_, keep_prob, train_step):
     # Train the model, and also write summaries.
     # Every 10th step, measure test-set accuracy, and write test summaries
     # All other steps, run train_step on training data, & add training summaries
+    
     for i in range(max_steps):
       if i % 10 == 0:  # Record summaries and test-set accuracy
         summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(x, y_, keep_prob, i, False))
@@ -173,11 +166,9 @@ def feed_dict(x, y_, keep_prob, idx, train):
   # batch_data = x[offset:(offset + BATCH_SIZE), :, :, :]
   # batch_labels = y_[offset:(offset + BATCH_SIZE), :]
   if train:
-    #xs, ys = mnist.train.next_batch(BATCH_SIZE)
     xs, ys = batched_data(idx, train_X, train_y, "TRAIN")
     k = drop_out
   else:
-    #xs, ys = mnist.test.images, mnist.test.labels
     xs, ys = batched_data(idx, test_X, test_y, "TEST")
     k = 1.0
   return {x: xs, y_: ys, keep_prob: k}
@@ -197,8 +188,11 @@ def main(_):
     row_len = IMG_ROWS * IMG_COLS * NUM_CHANNELS
     x = tf.placeholder(tf.float32, [BATCH_SIZE, row_len], name='x-input')
     y_ = tf.placeholder(tf.float32, [BATCH_SIZE, NUM_LABELS], name='y-input')
-
-
+  
+  with tf.name_scope('input_reshape'):
+    image_shaped_input = tf.reshape(x, [-1, IMG_ROWS, IMG_COLS, NUM_CHANNELS])
+    tf.image_summary('input', image_shaped_input, 100)
+  
   accuracy, keep_prob, train_step = train(x, y_)
   predict(accuracy, x, y_, keep_prob, train_step)
 

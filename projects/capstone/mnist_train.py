@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
-from data import load_minst_data
-from pdb import set_trace as bp
+from mnist_data import load_mnist_data
+#from pdb import set_trace as bp
 
 img_rows = 28
 img_cols = 28
@@ -153,7 +153,7 @@ def t_p(train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, 
 		test_labels, tf_train_dataset, tf_train_labels, optimizer, loss, train_prediction)
 
 if __name__ == '__main__':
-	train_dataset, train_labels = load_minst_data("training")
-	test_dataset, test_labels = load_minst_data("testing")
-	valid_dataset, valid_labels = load_minst_data("validation")
+	train_dataset, train_labels = load_mnist_data("training")
+	test_dataset, test_labels = load_mnist_data("testing")
+	valid_dataset, valid_labels = load_mnist_data("validation")
 	t_p(train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels)

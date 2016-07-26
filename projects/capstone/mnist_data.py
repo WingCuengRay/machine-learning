@@ -1,31 +1,101 @@
-import os, struct
+import os
+import struct
+import sys
 import numpy as np
+import gzip
+import glob
+
 from scipy import ndimage
 from sklearn.cross_validation import train_test_split
+from six.moves.urllib.request import urlretrieve
 
 '''for debugging'''
-#from pdb import set_trace as bp
+from pdb import set_trace as bp
 #import matplotlib.pyplot as plt
 #from random import randint
 
 path = "data/minst_digit"
 pixel_depth = 255
 NUM_LABELS = 10
+last_percent_reported = None
+BASE_URL = "http://yann.lecun.com/exdb/mnist/"
 
 def labels_to_one_hot(labels):
   labels = (np.arange(NUM_LABELS) == labels[:,None]).astype(np.float32)
   return labels
 
 def get_dataset_by_name(data_set_name):
+	if not os.path.exists(path):
+		os.makedirs(path)
 	if data_set_name == "training":	
-		img_file = os.path.join(path, 'train-images-idx3-ubyte') 
-		lbl_file = os.path.join(path, 'train-labels-idx1-ubyte')
+		img_file = "train-images-idx3-ubyte"
+		lbl_file = "train-labels-idx1-ubyte"
 	elif data_set_name == "testing":
-		img_file = os.path.join(path, 't10k-images-idx3-ubyte')
-		lbl_file = os.path.join(path, 't10k-labels-idx1-ubyte')
+		img_file = "t10k-images-idx3-ubyte"
+		lbl_file = "t10k-labels-idx1-ubyte"
 	else:
 		raise ValueError, "dataset must be 'testing' or 'training'"
-	return(img_file, lbl_file)
+	data_file_path = os.path.join(path, img_file)
+	label_file_path = os.path.join(path, lbl_file)
+	if os.path.exists(data_file_path):
+		data_file = data_file_path
+	else:
+		data_file_gz = download_mnist_data(img_file)
+		data_file = extract_gz(data_file_gz)
+	if os.path.exists(label_file_path):
+		label_file = label_file_path
+	else:
+		label_file_gz = download_mnist_data(lbl_file)
+		label_file = extract_gz(label_file_gz)
+	return(data_file, label_file)
+
+def download_progress(count, block_size, total_size):
+	global last_percent_reported
+	percent = int(count * block_size * 100 / total_size)
+	if last_percent_reported != percent:
+		if percent % 5  == 0:
+			sys.stdout.write("%s%%" % percent)
+			sys.stdout.flush()
+		else:
+			sys.stdout.write(".")
+			sys.stdout.flush()
+		last_percent_reported = percent
+
+def download_mnist_data(filename, force=False):
+	file_name_with_extension = filename+".gz"
+	print "Attempting to download", filename
+	saved_file, _ = urlretrieve(BASE_URL + file_name_with_extension, os.path.join(path, file_name_with_extension), reporthook=download_progress)
+	print("\nDownload Complete!")
+	statinfo = os.stat(saved_file)
+	if statinfo.st_size == get_expected_bytes(filename):
+		print("Found and verified", saved_file)
+		return saved_file
+	else:
+		raise Exception("Failed to verify " + filename)
+
+def extract_gz(saved_file):
+	print("Extracting:", saved_file)
+	base = os.path.basename(saved_file)
+	dest_name = os.path.join(path, base[:-3])
+	with gzip.open(saved_file, 'rb') as infile:
+		with open(dest_name, 'wb') as outfile:
+			for line in infile:
+				outfile.write(line)
+	print("Success")
+	return dest_name			
+
+def get_expected_bytes(filename):
+	if filename == "train-images-idx3-ubyte":
+		byte_size = 9912422
+	elif filename == "train-labels-idx1-ubyte":
+		byte_size = 28881
+	elif filename == "t10k-images-idx3-ubyte":
+		byte_size = 1648877
+	elif filename == "t10k-labels-idx1-ubyte":
+		byte_size = 4542
+	else:
+		raise Exception("Invalid file name" + filename)
+	return byte_size
 
 def read_image_file_to_array(file_name):
 	file = open(file_name, 'rb')

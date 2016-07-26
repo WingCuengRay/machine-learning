@@ -25,14 +25,14 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from pdb import set_trace as bp
-from data import load_mnist_data
+#from pdb import set_trace as bp
+from mnist_data import load_mnist_data
 
 #from tensorflow.examples.tutorials.mnist import input_data
 
 learning_rate = .001
 drop_out = 0.9
-max_steps = 1000
+max_steps = 2000
 data_dir = '/tmp/data'
 summaries_dir = '/tmp/mnist_logs'
 img_rows = 28

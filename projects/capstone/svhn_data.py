@@ -1,25 +1,27 @@
-import os, struct
+import os
+import struct
 import numpy as np
 import scipy
-import h5py
+import sys
+
 from scipy.io import loadmat
-# from scipy import ndimage
 from sklearn.cross_validation import train_test_split
 from itertools import product
+from six.moves.urllib.request import urlretrieve
 
 # '''for debugging'''
-from pdb import set_trace as bp
-import matplotlib.pyplot as plt
-from random import randint
+#from pdb import set_trace as bp
+#import matplotlib.pyplot as plt
+#from random import randint
 
-data_path = "data"
+data_path = "data/svhn"
 cropped_data_path = data_path+"/cropped"
 full = data_path+"/full"
 FORMAT_2_FILES = ['{}_32x32.mat'.format(s) for s in ['train', 'test', 'extra']]
 FORMAT_2_TRAIN_FILE, FORMAT_2_TEST_FILE, FORMAT_2_EXTRA_FILE = FORMAT_2_FILES
 PIXEL_DEPTH = 255
 NUM_LABELS = 10
-
+last_percent_reported = None
 
 def read_data_file(file_name):
 	file = open(file_name, 'rb')
@@ -31,17 +33,29 @@ def convert_img_array_vec(img_array):
 	rows = img_array.shape[0]
 	cols = img_array.shape[1]
 	chans = img_array.shape[2]
-	num = img_array.shape[3]
-	data_array = (img_array.reshape(num, rows, cols, chans).astype(np.float32) - PIXEL_DEPTH / 2) / PIXEL_DEPTH
-	data_array = data_array.reshape((-1, rows, cols, chans)).astype(np.float32)
-	#data_array = data_array.reshape((-1, rows*cols*chans)).astype(np.float32)
-	return data_array
+	num_imgs = img_array.shape[3]
+	scalar = 1 / PIXEL_DEPTH
+	#not the most efficent way but can monitor what is happening
+	new_array = np.empty(shape=(num_imgs, 3072), dtype=float)
+	for x in range(0, num_imgs):
+		temp = img_array[:,:,:,x]
+		vec = np.ndarray.flatten(temp)
+		#normalize pixels to 0 and 1. 0 is pure white, 1 is pure black.
+  		norm_vec = (255-vec)*1.0/255.0  
+		new_array[x] = norm_vec
+	return new_array
 
 def convert_labels_to_one_hot(labels):
 	labels = (np.arange(NUM_LABELS) == labels[:,None]).astype(np.float32)
 	return labels
 
 def sainty_check(imgs, labels):
+	ri = randint(0,len(labels)-1)
+	print(labels[ri])
+	plt.imshow(imgs[:,:,:,ri])
+	plt.show()
+
+def sainty_check(imgs_array):
 	ri = randint(0,len(labels)-1)
 	print(labels[ri])
 	plt.imshow(imgs[:,:,:,ri])
@@ -59,15 +73,57 @@ def process_data_file(file):
 
 def create_svhn(dataset):
 	if dataset == "train":
-		data_file = os.path.join(cropped_data_path, "train_32x32.mat")
+		data_file_name = "train_32x32.mat"
 	elif dataset == "test":
-		data_file = os.path.join(cropped_data_path, "test_32x32.mat")
+		data_file_name =  "test_32x32.mat"
 	elif dataset == "extra":
-		data_file = os.path.join(cropped_data_path, "extra_32x32.mat")
+		data_file_name = "extra_32x32.mat"
 	else:
 		raise NotImplementedError('dataset must be either train or test')
-	X, y = read_data_file(data_file)
+	data_file = os.path.join(cropped_data_path, data_file_name)
+	if os.path.exists(data_file):
+		X, y = read_data_file(data_file)
+	else:
+		if not os.path.exists(cropped_data_path):
+			os.makedirs(cropped_data_path)
+		downloaded_file = download_data_file(data_file_name)
+		X, y = read_data_file(downloaded_file)
 	return X, y
+
+def download_progress(count, block_size, total_size):
+	global last_percent_reported
+	percent = int(count * block_size * 100 / total_size)
+	if last_percent_reported != percent:
+		if percent % 5  == 0:
+			sys.stdout.write("%s%%" % percent)
+			sys.stdout.flush()
+		else:
+			sys.stdout.write(".")
+			sys.stdout.flush()
+		last_percent_reported = percent
+
+def download_data_file(filename, force=False):
+	base_url = "http://ufldl.stanford.edu/housenumbers/"
+	print "Attempting to download", filename
+	saved_file, _ = urlretrieve(base_url + filename, os.path.join(cropped_data_path, filename), reporthook=download_progress)
+	print("\nDownload Complete!")
+	statinfo = os.stat(saved_file)
+	if statinfo.st_size == get_expected_bytes(filename):
+		print("Found and verified", saved_file)
+	else:
+		raise Exception("Failed to verify " + filename)
+	return saved_file
+
+def get_expected_bytes(filename):
+	if filename == "train_32x32.mat":
+		byte_size = 182040794
+	elif filename == "test_32x32.mat":
+		byte_size = 64275384
+	elif filename == "extra_32x32.mat":
+		byte_size = 1329278602
+	else:
+		raise Exception("Invalid file name" + filename)
+	return byte_size
 
 def train_validation_spit(train_dataset, train_labels):
 	train_dataset, validation_dataset, train_labels, validation_labels = train_test_split(train_dataset, train_labels, test_size=0.33, random_state = 42)
