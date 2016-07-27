@@ -152,7 +152,7 @@ def load_svhn_data(data_type):
 if __name__ == '__main__':
 	train_data, train_labels = create_svhn('train')
 	test_data, test_labels = create_svhn('test')
-	train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)	
+	#train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)	
 	write_npy_file(train_data, train_labels, "train")
-	write_npy_file(valid_data, valid_labels, "valid")
+	#write_npy_file(valid_data, valid_labels, "valid")
 	write_npy_file(test_data, test_labels, "test")

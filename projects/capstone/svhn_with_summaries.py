@@ -26,7 +26,6 @@ from __future__ import print_function
 
 import tensorflow as tf
 from pdb import set_trace as bp
-from data import load_mnist_data
 from svhn_data import load_svhn_data
 
 learning_rate = .001
@@ -38,7 +37,7 @@ IMG_ROWS = 32
 IMG_COLS = 32
 NUM_CHANNELS = 3
 NUM_LABELS = 10
-BATCH_SIZE = 512
+BATCH_SIZE = 10000
 
 
 train_X, train_y = load_svhn_data("training")

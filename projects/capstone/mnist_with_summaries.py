@@ -25,9 +25,8 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-#from pdb import set_trace as bp
+from pdb import set_trace as bp
 from mnist_data import load_mnist_data
-
 #from tensorflow.examples.tutorials.mnist import input_data
 
 learning_rate = .001
@@ -39,12 +38,11 @@ img_rows = 28
 img_cols = 28
 NUM_CHANNELS = 1
 NUM_LABELS = 10
-BATCH_SIZE = 1024
+BATCH_SIZE = 10000
 
 train_X, train_y = load_mnist_data("training")
 valid_X, valid_y = load_mnist_data("validation")
 test_X, test_y = load_mnist_data("testing")
-#mnist = input_data.read_data_sets(data_dir, one_hot=True)
 
 def train(x, y_):
   # Create a multilayer model.
@@ -153,24 +151,76 @@ def predict(accuracy, x, y_, keep_prob, train_step):
 
 def batched_data(idx, imgs, labels):
   """Return the next `batch_size` examples from this data set."""
-  #start = idx * BATCH_SIZE
+  # step = step +1
+  # bp()
+  # offset = (step * BATCH_SIZE) % (labels.shape[0] - BATCH_SIZE)
+  # batch_data = imgs[offset:(offset + BATCH_SIZE), :, :, :]
+  # batch_labels = labels[offset:(offset + BATCH_SIZE), :]
+
+  start = idx * BATCH_SIZE
   start = idx + BATCH_SIZE
   end = start + BATCH_SIZE
   batched_images = imgs[start:end]
   batched_labels = labels[start:end]
   #print(batched_images.shape, batched_labels.shape, ds, start, end)
+
+  # batched_images, batched_labels = tf.train.shuffle_batch(
+  #     [single_image, single_label],
+  #     batch_size=BATCH_SIZE,
+  #     num_threads=4,
+  #     capacity=50000,
+  #     min_after_dequeue=10000)
   return batched_images, batched_labels
 
 
+# def generate_image_and_label_batch(image, label, min_queue_examples,
+#                                     batch_size, shuffle):
+#   """Construct a queued batch of images and labels.
 
+#   Args:
+#     image: 3-D Tensor of [height, width, 3] of type.float32.
+#     label: 1-D Tensor of type.int32
+#     min_queue_examples: int32, minimum number of samples to retain
+#       in the queue that provides of batches of examples.
+#     batch_size: Number of images per batch.
+#     shuffle: boolean indicating whether to use a shuffling queue.
+
+#   Returns:
+#     images: Images. 4D tensor of [batch_size, height, width, 3] size.
+#     labels: Labels. 1D tensor of [batch_size] size.
+#   """
+#   # Create a queue that shuffles the examples, and then
+#   # read 'batch_size' images + labels from the example queue.
+#   num_preprocess_threads = 16
+#   if shuffle:
+#     images, label_batch = tf.train.shuffle_batch(
+#         [image, label],
+#         batch_size=batch_size,
+#         num_threads=num_preprocess_threads,
+#         capacity=min_queue_examples + 3 * batch_size,
+#         min_after_dequeue=min_queue_examples)
+#   else:
+#     images, label_batch = tf.train.batch(
+#         [image, label],
+#         batch_size=batch_size,
+#         num_threads=num_preprocess_threads,
+#         capacity=min_queue_examples + 3 * batch_size)
+
+#   # Display the training images in the visualizer.
+#   tf.image_summary('images', images)
+
+#   return images, tf.reshape(label_batch, [batch_size])
+
+
+#mnist = input_data.read_data_sets(data_dir, one_hot=True)
 def feed_dict(x, y_, keep_prob, idx, train):
   if train:
     #xs, ys = mnist.train.next_batch(BATCH_SIZE)
     xs, ys = batched_data(idx, train_X, train_y)
+    #xs, ys = generate_image_and_label_batch(train_X, train_y, 10, BATCH_SIZE, shuffle=True)
     k = drop_out
   else:
-    #xs, ys = mnist.test.images, mnist.test.labels
-    xs, ys = batched_data(idx, test_X, test_y)
+    xs, ys = test_X, test_y
     k = 1.0
   return {x: xs, y_: ys, keep_prob: k}
 
@@ -183,10 +233,12 @@ def prepare_log_dir():
 
 
 
+
+
+
 def main(_):
   prepare_log_dir()
   # Import data
-
   # Input placeholders
   with tf.name_scope('input'):
     row_len = img_rows * img_cols * NUM_CHANNELS
