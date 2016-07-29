@@ -207,4 +207,4 @@ if __name__ == '__main__':
 	#train_full = read_digit_struct("train")
 	#test_full = read_digit_struct("test")
 	#print(train_full, test_full)
-
+	pass
