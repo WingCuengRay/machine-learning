@@ -5,7 +5,7 @@ from __future__ import print_function
 import tensorflow as tf
 from pdb import set_trace as bp
 from svhn_data import load_svhn_data
-from svhn_model import model
+import svhn_model as model
 
 #Constants
 
@@ -16,12 +16,7 @@ IMG_ROWS = 32
 IMG_COLS = 32
 NUM_CHANNELS = 3
 NUM_LABELS = 10
-BATCH_SIZE = 1024
-
-'''Load training files from svhn_data.py utility.'''
-train_X, train_y = load_svhn_data("training")
-valid_X, valid_y = load_svhn_data("validation")
-test_X, test_y = load_svhn_data("testing")
+BATCH_SIZE = 128
 
 
 def predict(accuracy, x, y_, keep_prob, train_step):
@@ -59,6 +54,15 @@ def batched_data(idx, imgs, labels, ds):
   batched_labels = labels[start:end]
   return batched_images, batched_labels
 
+def accuracy(y, y_):
+  with tf.name_scope('accuracy'):
+    with tf.name_scope('correct_prediction'):
+      correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+  with tf.name_scope('accuracy'):
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+  tf.scalar_summary('accuracy', accuracy)
+  return(accuracy)
+
 def feed_dict(x, y_, keep_prob, idx, train):
   #TODO fix batching
   """Creates a TensorFlow feed_dict: maps data into Tensor placeholders."""
@@ -80,11 +84,14 @@ def prepare_log_dir():
 def main(_):
   prepare_log_dir()
   # Import data
-
+  '''Load training files from svhn_data.py utility.'''
+  train_X, train_y = load_svhn_data("training")
+  valid_X, valid_y = load_svhn_data("validation")
+  test_X, test_y = load_svhn_data("testing")
   # Input placeholders
   with tf.name_scope('input'):
     row_len = IMG_ROWS * IMG_COLS * NUM_CHANNELS
-    x = tf.placeholder(tf.float32, [BATCH_SIZE, row_len], name='Images')
+    x = tf.placeholder(tf.float32, [BATCH_SIZE, IMG_ROWS, IMG_COLS, NUM_CHANNELS], name='Images')
     y_ = tf.placeholder(tf.float32, [BATCH_SIZE, NUM_LABELS], name='Labels')
     keep_prob = tf.placeholder(tf.float32)
 
@@ -92,8 +99,14 @@ def main(_):
     image_shaped_input = tf.reshape(x, [-1, IMG_ROWS, IMG_COLS, NUM_CHANNELS])
     tf.image_summary('input', image_shaped_input, 100)
 
-  accuracy, train_step = model(x, y_, keep_prob)
-  predict(accuracy, x, y_, keep_prob, train_step)
+    #x, fc_layer =  model.convolutions(x, y_, keep_prob)
+    x, fc_layer =  model.convolutions(x, y_, keep_prob)
+    y = model.model(x)
+    #x, conv_layer = model.regression_head(x, fc_layer)
+    #x, y = model.regression_head(x, fc_layer)
+  ac = accuracy(y, y_)
+  bp()
+  predict(ac, x, y_, keep_prob, train_step)
 
 if __name__ == '__main__':
   tf.app.run()

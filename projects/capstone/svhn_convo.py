@@ -6,6 +6,7 @@ from __future__ import print_function
 import time
 import numpy
 import sys
+import os
 import tensorflow as tf
 
 from svhn_data import load_svhn_data
@@ -68,8 +69,8 @@ def eval_in_batches(data, sess, eval_prediction, eval_data):
 def train(initial_weights=None):
   pass
 
-
-def main(argv=None):
+def main(saved_weights_path):
+  print("SWP", saved_weights_path)
   prepare_log_dir()
   
   train_data, train_labels= load_svhn_data("training")
@@ -135,6 +136,12 @@ def main(argv=None):
   # Create a local session to run the training.
   start_time = time.time()
   with tf.Session() as sess:
+    
+    # Restore variables from disk.
+    if(saved_weights_path):
+      saver.restore(sess, saved_weights_path)
+      print("Model restored.")
+
     sess.run(init_op)
     #Run all the initializers to prepare the trainable parameters.
     #Prepare vairables for the tensorboard
@@ -191,8 +198,13 @@ def main(argv=None):
     #print('Test Accuracy: %.2f%%' % test_error)
 
 if __name__ == '__main__':
+  saved_weights_path = None
   if len(sys.argv) > 1:
-    print("load file", sys.argv[1])
+    print("Loading Saved Checkpoints From:", sys.argv[1])
+    if os.path.isfile(sys.argv[1]):
+      saved_weights_path = sys.argv[1]
+    else:
+      raise EnvironmentError("I'm sorry, Dave. I'm afraid I can't do that...")
   else:
-    saved_weights = None
-  main(saved_weights)
+    print("Starting without Saved Weights.")
+  main(saved_weights_path)

@@ -107,7 +107,7 @@ def process_img_file(file):
 	magic, num, rows, cols = struct.unpack(">IIII", file.read(16))
 	data_array = (np.fromfile(file, dtype=np.uint8).reshape(num, rows, cols).astype(np.float32) - pixel_depth / 2) / pixel_depth
 	print("das1:", data_array.shape)
-	data_array = data_array.reshape((-1, rows*cols*1)).astype(np.float32)
+	#data_array = data_array.reshape((-1, rows*cols*1)).astype(np.float32)
 	print("das2:", data_array.shape)
 	return data_array
 

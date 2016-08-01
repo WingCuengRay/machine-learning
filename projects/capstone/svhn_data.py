@@ -14,7 +14,7 @@ from itertools import product
 from six.moves.urllib.request import urlretrieve
 
 # '''for debugging'''
-#from pdb import set_trace as bp
+from pdb import set_trace as bp
 #import matplotlib.pyplot as plt
 #from random import randint
 
@@ -53,12 +53,15 @@ def convert_img_array_vec(img_array):
 	num_imgs = img_array.shape[3]
 	scalar = 1 / PIXEL_DEPTH
 	#not the most efficent way but can monitor what is happening
-	new_array = np.empty(shape=(num_imgs, 3072), dtype=float)
+	new_array = np.empty(shape=(num_imgs, rows, cols, chans), dtype=np.float32)
+	#new_array = np.empty(shape=(num_imgs, rows*cols*chans), dtype=np.float32)
 	for x in range(0, num_imgs):
 		temp = img_array[:,:,:,x]
-		vec = np.ndarray.flatten(temp)
+		#vec = np.ndarray.flatten(temp)
+		vec = temp
 		#normalize pixels to 0 and 1. 0 is pure white, 1 is pure black.
   		norm_vec = (255-vec)*1.0/255.0  
+		#bp()
 		new_array[x] = norm_vec
 	return new_array
 
@@ -195,12 +198,13 @@ def load_svhn_data(data_type):
 	return imgs, labels
 
 if __name__ == '__main__':
-	# train_data, train_labels = create_svhn('cropped', 'train')
-	# test_data, test_labels = create_svhn('cropped', 'test')
-	# #train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)	
-	# write_npy_file(train_data, train_labels, "train")
-	# #write_npy_file(valid_data, valid_labels, "valid")
-	# write_npy_file(test_data, test_labels, "test")
+	train_data, train_labels = create_svhn('cropped', 'train')
+	test_data, test_labels = create_svhn('cropped', 'test')
+	train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)	
+	write_npy_file(train_data, train_labels, "train")
+	write_npy_file(valid_data, valid_labels, "valid")
+	write_npy_file(test_data, test_labels, "test")
+	
 	#test_data, test_labels = create_svhn('full', 'test')
 	#train_data, train_labels = create_svhn('full', 'train')
 	#extra_data, extra_labels = create_svhn('full', 'extra')
