@@ -114,14 +114,19 @@ def get_data_file_name(master_set, dataset):
 
 def make_data_dirs(master_set):
 	if master_set == "cropped":
-		os.makedirs(CROPPED_DATA_PATH)
+		if not os.path.exists(CROPPED_DATA_PATH):
+			os.makedirs(CROPPED_DATA_PATH)
 	elif master_set == "full":
-		os.makedirs(FULL_DATA_PATH)
+		if not os.path.exists(FULL_DATA_PATH):
+			os.makedirs(FULL_DATA_PATH)
 	else:
 		raise NotImplementedError('Master data set must be full or cropped')
 
 def create_svhn(master_set, dataset):
-	path = FULL_DATA_PATH
+	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	#MANUALLY CHANGE THIS FOR NOW!
+	#path = FULL_DATA_PATH
+	path = CROPPED_DATA_PATH
 	data_file_name = get_data_file_name(master_set, dataset)
 	data_file_pointer = os.path.join(path, data_file_name)
 	if os.path.exists(data_file_pointer):
