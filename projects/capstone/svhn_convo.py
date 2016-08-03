@@ -9,7 +9,7 @@ import os
 import tensorflow as tf
 
 from svhn_data import load_svhn_data
-from svhn_model import model
+from svhn_model import classification_head
 from pdb import set_trace as bp
 
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_convo_logs'
@@ -48,7 +48,7 @@ def train(train_data, train_labels, valid_data, valid_labels, test_data, test_la
   y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, NUM_LABELS])
 
   # Training computation: logits + cross-entropy loss.
-  x, logits, params = model(BATCH_SIZE, True)
+  x, logits, params = classification_head(BATCH_SIZE, True)
   prediction = tf.nn.softmax(logits)
 
   # L2 regularization for the fully connected parameters.

@@ -6,8 +6,7 @@ import tensorflow as tf
 import pylab
 import matplotlib
 
-#from matplotlib import pyplot as plt
-from svhn_model import model
+from svhn_model import classification_head
 from pdb import set_trace as bp
 
 def detect(img_path, saved_model_weights):
@@ -18,7 +17,7 @@ def detect(img_path, saved_model_weights):
  
   #load the previously saved model to load the vars into
   batch_size = 1
-  x, logits, params = model(batch_size)
+  x, logits, params = classification_head(batch_size)
   y_ = tf.placeholder(tf.float32, shape=[1, 10])
   prediction = tf.nn.softmax(logits)
  

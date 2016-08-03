@@ -12,7 +12,7 @@ def _activation_summary(x):
 
 # We will replicate the model structure for the training subgraph, as well
 # as the evaluation subgraphs, while sharing the trainable parameters.
-def model(batch_size, train=False):
+def convolution_model(batch_size, train):
   # These placeholder nodes will be fed a batch of training data at each
   # training step using the {feed_dict} argument to the Run() call below.
   with tf.name_scope('input'):
@@ -30,11 +30,8 @@ def model(batch_size, train=False):
   conv2_weights = tf.Variable(tf.truncated_normal(shape=[5, 5, 64, 64], stddev=5e-2))
   conv2_biases =  tf.Variable(tf.constant(0.1, shape=[64]))
   
-  l3_weights = tf.Variable(tf.truncated_normal(shape=[4096, 384], stddev=0.04))
-  l3_biases = tf.Variable(tf.constant(0.1, shape=[384]))
-
-  l4_weights = tf.Variable(tf.truncated_normal(shape=[384, 192], stddev=0.04))
-  l4_biases = tf.Variable(tf.constant(0.1, shape=[192]))
+  #conv3_weights = tf.Variable
+  #conv3_biases = tf.Variable
 
   """The Model definition."""
   # 2D convolution, with 'SAME' padding (i.e. the output feature map has
@@ -64,8 +61,31 @@ def model(batch_size, train=False):
     pool2 = tf.nn.max_pool(norm2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool2')
 
   #Layer3
+  # with tf.variable_scope('conv3') as scope:
+  #   conv3 = tf.nn.conv2d(pool2, conv3_weights, strides = [1,1,1,1,], padding='SAME')
+  #   relu3 = tf.nn.relu(tf.nn.bias_add(conv3, conv3_biases))
+  #   _activation_summary(relu3)
+  #   norm3 = tf.nn.lrn(relu3, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm3')
+  #   pool3 = tf.nn.max_pool(norm3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool3')
+
+  weights = [conv1_weights, conv1_biases, 
+            conv2_weights, conv2_biases]
+
+  return data_node, pool2, weights
+
+
+def classification_head(batch_size, train=False):
+  x, conv_layer, conv_vars = convolution_model(batch_size, train=False)
+
+  l3_weights = tf.Variable(tf.truncated_normal(shape=[4096, 384], stddev=0.04))
+  l3_biases = tf.Variable(tf.constant(0.1, shape=[384]))
+
+  l4_weights = tf.Variable(tf.truncated_normal(shape=[384, 192], stddev=0.04))
+  l4_biases = tf.Variable(tf.constant(0.1, shape=[192]))
+
+  #Layer3
   with tf.variable_scope('local3') as scope:
-    reshape = tf.reshape(pool2, [batch_size, -1])
+    reshape = tf.reshape(conv_layer, [batch_size, -1])
     dim = reshape.get_shape()[1].value
     #print(dim)
     l3_weights = tf.Variable(tf.truncated_normal(shape=[dim, 384], stddev=0.04))
@@ -86,4 +106,10 @@ def model(batch_size, train=False):
     softmax_linear = tf.add(tf.matmul(l4, sm_weights), sm_biases)
     _activation_summary(softmax_linear)
 
-  return data_node, softmax_linear, [conv1_weights, conv1_biases, conv2_weights, conv2_biases, l3_weights, l3_biases, l4_weights, l4_biases]
+  weights = conv_vars + [l3_weights, l3_biases, 
+            l4_weights, l4_biases]
+
+  return x, softmax_linear, weights
+
+def regression_head(batch_size, train=False):
+  pass
