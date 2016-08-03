@@ -46,7 +46,7 @@ def read_digit_struct(dataset):
 	struct_file = os.path.join(path, "digitStruct.mat")
 	return DigitStruct(struct_file)
 
-def convert_img_array_vec(img_array):
+def convert_imgs_to_array(img_array):
 	rows = img_array.shape[0]
 	cols = img_array.shape[1]
 	chans = img_array.shape[2]
@@ -88,7 +88,7 @@ def process_data_file(file):
 	labels[labels==10] = 0 #Fix weird labeling in dataset
 	labels_one_hot = convert_labels_to_one_hot(labels)
 	#sainty_check(imgs, labels_one_hot)
-	img_array = convert_img_array_vec(imgs)
+	img_array = convert_imgs_to_array_vec(imgs)
 	return img_array, labels_one_hot
 
 def get_data_file_name(master_set, dataset):

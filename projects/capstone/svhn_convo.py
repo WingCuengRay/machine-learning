@@ -18,7 +18,6 @@ VALIDATION_SIZE = 5000  # Size of the validation set.
 SEED = 66478  # Set to None for random seed.
 BATCH_SIZE = 64
 NUM_EPOCHS = 3
-EVAL_BATCH_SIZE = 64
 EVAL_FREQUENCY = 100  # Number of steps between evaluations.
 
 def error_rate(predictions, labels):
@@ -49,7 +48,7 @@ def train(train_data, train_labels, valid_data, valid_labels, test_data, test_la
   y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, NUM_LABELS])
 
   # Training computation: logits + cross-entropy loss.
-  x, logits, params = model(True)
+  x, logits, params = model(BATCH_SIZE, True)
   prediction = tf.nn.softmax(logits)
 
   # L2 regularization for the fully connected parameters.
@@ -110,11 +109,11 @@ def train(train_data, train_labels, valid_data, valid_labels, test_data, test_la
 
     #Prepare vairables for the tensorboard
     merged = tf.merge_all_summaries()
-    
+
     train_writer = tf.train.SummaryWriter(TENSORBOARD_SUMMARIES_DIR + '/train', sess.graph)
     valid_writer = tf.train.SummaryWriter(TENSORBOARD_SUMMARIES_DIR + '/validation')
     test_writer = tf.train.SummaryWriter(TENSORBOARD_SUMMARIES_DIR + '/test')
-    
+
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
     run_metadata = tf.RunMetadata()
 
@@ -149,7 +148,6 @@ def train(train_data, train_labels, valid_data, valid_labels, test_data, test_la
     #Save the variables to disk.
     save_path = saver.save(sess, "/tmp/model.ckpt")
     print("Model saved in file: %s" % save_path)
-    
     test_feed_dict = fill_feed_dict(test_data, test_labels, x, y_, step)
     summary, _, l, lr, test_predictions = sess.run([merged, optimizer, loss, learning_rate, prediction], feed_dict=test_feed_dict, options=run_options, run_metadata=run_metadata)
     test_writer.add_run_metadata(run_metadata, 'step%03d' % step)

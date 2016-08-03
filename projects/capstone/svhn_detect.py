@@ -8,9 +8,7 @@ import matplotlib
 
 #from matplotlib import pyplot as plt
 from svhn_model import model
-
 from pdb import set_trace as bp
-
 
 def detect(img_path, saved_model_weights):
   #print("hola", img_path)
@@ -19,8 +17,11 @@ def detect(img_path, saved_model_weights):
   #pylab.show()
  
   #load the previously saved model to load the vars into
-  x, y, params = model()
-
+  batch_size = 1
+  x, logits, params = model(batch_size)
+  y_ = tf.placeholder(tf.float32, shape=[1, 10])
+  prediction = tf.nn.softmax(logits)
+ 
   #create a loader
   saver = tf.train.Saver()
   with tf.Session() as sess:
@@ -28,7 +29,14 @@ def detect(img_path, saved_model_weights):
     #place the weights into the model.
     saver.restore(sess, saved_model_weights)
     print("Model restored.")
+    
+    exp = np.expand_dims(img, axis=0)
+    norm_img = (255-img)*1.0/255.0  
 
+    feed_dict = {x: exp}
+    predictions = sess.run(prediction, feed_dict=feed_dict)
+   
+    print("Best Prediction is:", np.argmax(predictions))
 
 if __name__ == "__main__":
   
