@@ -184,8 +184,10 @@ def write_npy_file(data_array, lbl_array, data_set_name, data_path):
 	print('Saving to %s_svhn_labels.npy file done.' %(data_set_name))
 
 def load_svhn_data(data_type, data_set_name):
-	imgs = np.load(os.path.join(FULL_DATA_PATH, data_set_name+'_'+data_type+'_imgs.npy'))
-	labels = np.load(os.path.join(FULL_DATA_PATH, data_set_name+'_'+data_type+'_labels.npy'))
+	#TODO add error handling here
+	path = DATA_PATH + data_set_name
+	imgs = np.load(os.path.join(path, data_set_name+'_'+data_type+'_imgs.npy'))
+	labels = np.load(os.path.join(path, data_set_name+'_'+data_type+'_labels.npy'))
 	return imgs, labels
 
 def generate_cropped_files():

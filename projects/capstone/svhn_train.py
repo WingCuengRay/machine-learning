@@ -163,19 +163,18 @@ def train(train_data, train_labels, valid_data, valid_labels, test_data, test_la
 
 def main(saved_weights_path):
   prepare_log_dir()
-  #train_data, train_labels= load_svhn_data("training", "cropped")
-  #valid_data, valid_labels = load_svhn_data("validation", "cropped")
-  #test_data, test_labels = load_svhn_data("testing", "cropped")
-  
+  train_data, train_labels= load_svhn_data("train", "cropped")
+  valid_data, valid_labels = load_svhn_data("valid", "cropped")
+  test_data, test_labels = load_svhn_data("test", "cropped")
+  print("Cropped data loaded.")
   #load full sized data
-  train_data_full, train_labels_full= load_svhn_data("training", "full")
+  train_data_full, train_labels_full= load_svhn_data("train", "full")
+  test_data_full, test_labels_full = load_svhn_data("test", "full")
   #valid_data_full, valid_labels_full = load_svhn_data("validation", "full")
-  #test_data_full, test_labels_full = load_svhn_data("testing", "full")
-
-  #train_size = train_labels.shape[0]
-  #train(train_data, train_labels, valid_data, valid_labels, test_data, test_labels, train_size, saved_weights_path)
+  print("Full data loaded.")
+  train_size = train_labels.shape[0]
+  train(train_data, train_labels, valid_data, valid_labels, test_data, test_labels, train_size, saved_weights_path)
   
-
 if __name__ == '__main__':
   saved_weights_path = None
   if len(sys.argv) > 1:
