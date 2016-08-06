@@ -163,17 +163,17 @@ def train(train_data, train_labels, valid_data, valid_labels, test_data, test_la
 
 def main(saved_weights_path):
   prepare_log_dir()
-  train_data, train_labels= load_svhn_data("training")
-  valid_data, valid_labels = load_svhn_data("validation")
-  test_data, test_labels = load_svhn_data("testing")
+  #train_data, train_labels= load_svhn_data("training", "cropped")
+  #valid_data, valid_labels = load_svhn_data("validation", "cropped")
+  #test_data, test_labels = load_svhn_data("testing", "cropped")
   
   #load full sized data
-  #train_data_full, train_labels_full= load_svhn_data("training")
-  #valid_data_full, valid_labels_full = load_svhn_data("validation")
-  #test_data_full, test_labels_full = load_svhn_data("testing")
+  train_data_full, train_labels_full= load_svhn_data("training", "full")
+  #valid_data_full, valid_labels_full = load_svhn_data("validation", "full")
+  #test_data_full, test_labels_full = load_svhn_data("testing", "full")
 
-  train_size = train_labels.shape[0]
-  train(train_data, train_labels, valid_data, valid_labels, test_data, test_labels, train_size, saved_weights_path)
+  #train_size = train_labels.shape[0]
+  #train(train_data, train_labels, valid_data, valid_labels, test_data, test_labels, train_size, saved_weights_path)
   
 
 if __name__ == '__main__':

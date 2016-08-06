@@ -1,4 +1,5 @@
 import h5py
+from pdb import set_trace as bp
 
 #Wrapper for SVHN digitStruct
 class DigitStruct:
@@ -7,7 +8,7 @@ class DigitStruct:
         self.digit_struct_name = self.file['digitStruct']['name']
         self.digit_struct_bbox = self.file['digitStruct']['bbox']
 
-    def get_name(self,n):
+    def get_img_name(self,n):
         '''
             accepts: index for digit structure
             returns: the 'name' string for for the index in digitStruct. 
@@ -43,9 +44,18 @@ class DigitStruct:
 
     def get_digit_structure(self,n):
         structure = self.get_bbox(n)
-        structure['name'] = self.get_name(n)
+        structure['name'] = self.get_img_name(n)
         return structure
 
-# getAllDigitStructure returns all the digitStruct from the input file.     
+    # getAllDigitStructure returns all the digitStruct from the input file.     
     def get_all_digit_structure(self):
-        return [self.get_all_digit_structure(i) for i in range(len(self.digit_struct_name))]
+        x = [self.get_digit_structure(i) for i in range(len(self.digit_struct_name))]
+        return x
+
+    def get_all_imgs_and_digit_structure(self):
+        imgs =[]
+        structs = []
+        for i in range(len(self.digit_struct_name)):
+            imgs.append(self.get_img_name(i))
+            structs.append(self.get_digit_structure(i))
+        return imgs, structs

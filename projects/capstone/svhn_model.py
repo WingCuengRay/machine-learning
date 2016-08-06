@@ -19,7 +19,7 @@ def convolution_model(batch_size, train):
     data_node = tf.placeholder(tf.float32, shape=[batch_size, IMG_ROWS, IMG_COLS, NUM_CHANNELS])
     
   with tf.name_scope('image'):
-    tf.image_summary('input', data_node, 100)
+   tf.image_summary('input', data_node, 10)
 
   # The variables below hold all the trainable weights. They are passed an
   # initial value which will be assigned when we call:
@@ -87,7 +87,6 @@ def classification_head(batch_size, train=False):
   with tf.variable_scope('local3') as scope:
     reshape = tf.reshape(conv_layer, [batch_size, -1])
     dim = reshape.get_shape()[1].value
-    #print(dim)
     l3_weights = tf.Variable(tf.truncated_normal(shape=[dim, 384], stddev=0.04))
     l3_biases = tf.Variable(tf.constant(0.1, shape=[384]))
     l3 = tf.nn.relu(tf.matmul(reshape, l3_weights) + l3_biases)
@@ -109,7 +108,30 @@ def classification_head(batch_size, train=False):
   weights = conv_vars + [l3_weights, l3_biases, 
             l4_weights, l4_biases]
 
+  #output class scores 
   return x, softmax_linear, weights
 
 def regression_head(batch_size, train=False):
-  pass
+  '''takes any size input and slides a window of size [32x32] 
+  across the image in 4x4 strides.'''
+  num_runs = 5
+  num_labels = 10
+  #Densley Connected Layer
+  fc1_weights = tf.Variable(tf.truncated_normal(shape=[4096, 384], stddev=0.04))
+  fc1_biases = tf.Variable(tf.constant(0.1, shape=[384]))
+
+  W_conv1 = tf.reshape(fc1_weights, [8,  32, 128, 2048])
+  h_conv1 = tf.nn.relu(conv2d(conv_layer, reshape,
+                                stride=(1, 1), padding="VALID") + fc1_biases) 
+  #Output Layers
+  #5 max outputs, 10 classes
+  fc2_weights = weight_variable([2048, 1 + num_runs * num_labels])
+  fc2_biases = bias_variable([1 + num_runs * num_labels])
+
+  W_conv2 = tf.reshape(W_fc2, [1, 1, 2048, 1 + num_runs * num_labels])
+  h_conv2 = conv2d(h_conv1, W_conv2) + fc2_biases
+
+  x, conv_layer, conv_vars = convolutional_layers(batch_size, train=False)
+
+  #Output Box Coordinates
+  pass 

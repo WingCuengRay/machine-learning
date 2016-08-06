@@ -5,7 +5,6 @@ import scipy
 import sys
 import tarfile
 
-
 from digit_struct import DigitStruct
 
 from scipy.io import loadmat
@@ -15,36 +14,31 @@ from six.moves.urllib.request import urlretrieve
 
 # '''for debugging'''
 from pdb import set_trace as bp
-#import matplotlib.pyplot as plt
-#from random import randint
 
-DATA_PATH = "data/svhn"
-CROPPED_DATA_PATH = DATA_PATH+"/cropped"
-FULL_DATA_PATH = DATA_PATH+"/full"
+DATA_PATH = "data/svhn/"
+CROPPED_DATA_PATH = DATA_PATH+"cropped"
+FULL_DATA_PATH = DATA_PATH+"full"
 FORMAT_2_FILES = ['{}_32x32.mat'.format(s) for s in ['train', 'test', 'extra']]
 PIXEL_DEPTH = 255
 NUM_LABELS = 10
 last_percent_reported = None
 
 def read_data_file(file_name):
-	if file_name.endswith("tar.gz"):
-		extract_data_file(file_name)
-		raise NotImplementedError('Need to do something after data is loaded!')
-	else:
-		file = open(file_name, 'rb')
-		data = process_data_file(file)
-		file.close()
+	file = open(file_name, 'rb')
+	data = process_data_file(file)
+	file.close()
 	return data
+
+def read_digit_struct(data_path):
+	struct_file = os.path.join(data_path, "digitStruct.mat")
+	dstruct = DigitStruct(struct_file)
+	imgs, structs = dstruct.get_all_imgs_and_digit_structure()
+	return imgs, structs
 
 def extract_data_file(file_name):
 	tar = tarfile.open(file_name, "r:gz")
 	tar.extractall(FULL_DATA_PATH)
 	tar.close()
-
-def read_digit_struct(dataset):
-	path = FULL_DATA_PATH +"/"+dataset
-	struct_file = os.path.join(path, "digitStruct.mat")
-	return DigitStruct(struct_file)
 
 def convert_imgs_to_array(img_array):
 	rows = img_array.shape[0]
@@ -54,14 +48,11 @@ def convert_imgs_to_array(img_array):
 	scalar = 1 / PIXEL_DEPTH
 	#not the most efficent way but can monitor what is happening
 	new_array = np.empty(shape=(num_imgs, rows, cols, chans), dtype=np.float32)
-	#new_array = np.empty(shape=(num_imgs, rows*cols*chans), dtype=np.float32)
 	for x in range(0, num_imgs):
 		temp = img_array[:,:,:,x]
-		#vec = np.ndarray.flatten(temp)
 		vec = temp
 		#normalize pixels to 0 and 1. 0 is pure white, 1 is pure black.
   		norm_vec = (255-vec)*1.0/255.0  
-		#bp()
 		new_array[x] = norm_vec
 	return new_array
 
@@ -69,17 +60,11 @@ def convert_labels_to_one_hot(labels):
 	labels = (np.arange(NUM_LABELS) == labels[:,None]).astype(np.float32)
 	return labels
 
-def sainty_check(imgs, labels):
-	ri = randint(0,len(labels)-1)
-	print(labels[ri])
-	plt.imshow(imgs[:,:,:,ri])
-	plt.show()
-
-def sainty_check(imgs_array):
-	ri = randint(0,len(labels)-1)
-	print(labels[ri])
-	plt.imshow(imgs[:,:,:,ri])
-	plt.show()
+# def sainty_check(imgs_array):
+# 	ri = randint(0,len(labels)-1)
+# 	print(labels[ri])
+# 	plt.imshow(imgs[:,:,:,ri])
+# 	plt.show()
 
 def process_data_file(file):
 	data = loadmat(file)
@@ -87,8 +72,7 @@ def process_data_file(file):
 	labels = data['y'].flatten()
 	labels[labels==10] = 0 #Fix weird labeling in dataset
 	labels_one_hot = convert_labels_to_one_hot(labels)
-	#sainty_check(imgs, labels_one_hot)
-	img_array = convert_imgs_to_array_vec(imgs)
+	img_array = convert_imgs_to_array(imgs)
 	return img_array, labels_one_hot
 
 def get_data_file_name(master_set, dataset):
@@ -100,7 +84,7 @@ def get_data_file_name(master_set, dataset):
 		elif dataset == "extra":
 			data_file_name = "extra_32x32.mat"
 		else:
-			raise NotImplementedError('dataset must be either train, test or extra')
+			raise Exception('dataset must be either train, test or extra')
 	elif master_set == "full":
 		if dataset == "train":
 			data_file_name = "train.tar.gz"
@@ -109,7 +93,7 @@ def get_data_file_name(master_set, dataset):
 		elif dataset == "extra":
 			data_file_name = "extra.tar.gz"
 	else:
-		raise NotImplementedError('Master data set must be full or cropped')
+		raise Exception('Master data set must be full or cropped')
 	return data_file_name;
 
 def make_data_dirs(master_set):
@@ -120,22 +104,33 @@ def make_data_dirs(master_set):
 		if not os.path.exists(FULL_DATA_PATH):
 			os.makedirs(FULL_DATA_PATH)
 	else:
-		raise NotImplementedError('Master data set must be full or cropped')
+		raise Exception('Master data set must be full or cropped')
 
-def create_svhn(master_set, dataset):
-	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	#MANUALLY CHANGE THIS FOR NOW!
-	#path = FULL_DATA_PATH
-	path = CROPPED_DATA_PATH
+def create_svhn(dataset, master_set):
+	path = DATA_PATH+master_set
 	data_file_name = get_data_file_name(master_set, dataset)
 	data_file_pointer = os.path.join(path, data_file_name)
-	if os.path.exists(data_file_pointer):
-		return read_data_file(data_file_pointer)
+
+	if (not os.path.exists(data_file_pointer)):
+		''' Create the data dir structure '''
+		print("creating data dirs")
+		make_data_dirs(master_set)
+	if os.path.isfile(data_file_pointer):
+		''' Use the existing file '''
+		target_file = data_file_pointer
+		print "File Exists"
+		return read_data_file(target_file)
 	else:
-		if not os.path.exists(path):
-			make_data_dirs(master_set)
-		downloaded_file = download_data_file(path, data_file_name)
-		return read_data_file(downloaded_file)
+		new_file = download_data_file(path, data_file_name)
+		if(new_file.endswith("tar.gz")):
+			''' Extract and return the data file '''
+			print ("extract", new_file)
+			extract_data_file(new_file)
+			extract_dir = os.path.splitext(os.path.splitext(new_file)[0])[0]
+			return read_digit_struct(extract_dir)
+		else:
+			''' Return the data file '''
+			return read_data_file(new_file)
 
 def download_progress(count, block_size, total_size):
 	global last_percent_reported
@@ -182,38 +177,39 @@ def train_validation_spit(train_dataset, train_labels):
 	train_dataset, validation_dataset, train_labels, validation_labels = train_test_split(train_dataset, train_labels, test_size=0.33, random_state = 42)
 	return train_dataset, validation_dataset, train_labels, validation_labels
 
-def write_npy_file(data_array, lbl_array, data_set_name):
-	np.save(os.path.join(CROPPED_DATA_PATH,data_set_name+'_svhn_imgs.npy'), data_array)
-	print 'Saving to %s_svhn_imgs.npy file done. Data size is: %s' %((data_set_name), data_array.shape)
-	np.save(os.path.join(CROPPED_DATA_PATH,data_set_name+'_svhn_labels.npy'), lbl_array)
-	print 'Saving to %s_svhn_labels.npy file done. Contains %d rows' %(data_set_name, len(lbl_array))
+def write_npy_file(data_array, lbl_array, data_set_name, data_path):
+	np.save(os.path.join(DATA_PATH+data_path, data_path+"_"+data_set_name+'_imgs.npy'), data_array)
+	print('Saving to %s_svhn_imgs.npy file done.' %(data_set_name))
+	np.save(os.path.join(DATA_PATH+data_path, data_path+"_"+data_set_name+'_labels.npy'), lbl_array)
+	print('Saving to %s_svhn_labels.npy file done.' %(data_set_name))
 
-def load_svhn_data(data_type):
-	if data_type == "training":
-		imgs = np.load(os.path.join(CROPPED_DATA_PATH, 'train_svhn_imgs.npy'))
-		labels = np.load(os.path.join(CROPPED_DATA_PATH, 'train_svhn_labels.npy'))
-	elif data_type == "testing":
-		imgs = np.load(os.path.join(CROPPED_DATA_PATH, 'test_svhn_imgs.npy'))
-		labels = np.load(os.path.join(CROPPED_DATA_PATH, 'test_svhn_labels.npy'))
-	elif(data_type == "validation"):
-		imgs = np.load(os.path.join(CROPPED_DATA_PATH, 'valid_svhn_imgs.npy'))
-		labels = np.load(os.path.join(CROPPED_DATA_PATH, 'valid_svhn_labels.npy'))
-	else:
-		raise Exception("Data Set not found!")
+def load_svhn_data(data_type, data_set_name):
+	imgs = np.load(os.path.join(FULL_DATA_PATH, data_set_name+'_'+data_type+'_imgs.npy'))
+	labels = np.load(os.path.join(FULL_DATA_PATH, data_set_name+'_'+data_type+'_labels.npy'))
 	return imgs, labels
 
-if __name__ == '__main__':
-	train_data, train_labels = create_svhn('cropped', 'train')
-	test_data, test_labels = create_svhn('cropped', 'test')
+def generate_cropped_files():
+	train_data, train_labels = create_svhn('train', 'cropped')
 	train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)	
-	write_npy_file(train_data, train_labels, "train")
-	write_npy_file(valid_data, valid_labels, "valid")
-	write_npy_file(test_data, test_labels, "test")
 	
-	#test_data, test_labels = create_svhn('full', 'test')
-	#train_data, train_labels = create_svhn('full', 'train')
+	write_npy_file(train_data, train_labels, 'train', 'cropped')
+	write_npy_file(valid_data, valid_labels, 'valid', 'cropped')
+
+	test_data, test_labels = create_svhn('test', 'cropped')
+	write_npy_file(test_data, test_labels, 'test', 'cropped')
+	print("Cropped Files Done!!!")
+
+def generate_full_files():
+	train_data, train_labels = create_svhn('train', 'full')
+	write_npy_file(train_data, train_labels, 'train', 'full')
+
+	test_data, test_labels = create_svhn('test', 'full')
+	write_npy_file(test_data, test_labels, 'test', 'full')
+
 	#extra_data, extra_labels = create_svhn('full', 'extra')
-	#train_full = read_digit_struct("train")
-	#test_full = read_digit_struct("test")
-	#print(train_full, test_full)
-	pass
+	#write_npy_file(valid_data, valid_labels, 'valid', 'full')
+	print("Full Files Done!!!")
+
+if __name__ == '__main__':
+	generate_cropped_files()
+	generate_full_files()
