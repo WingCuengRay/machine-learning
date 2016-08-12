@@ -1,12 +1,14 @@
+#Modified from http://www.a2ialab.com/lib/exe/fetch.php?media=public:scripts:svhn_dataextract.py.
 import h5py
-from pdb import set_trace as bp
 
 #Wrapper for SVHN digitStruct
 class DigitStruct:
+    
     def __init__(self, file):
         self.file = h5py.File(file, 'r')
         self.digit_struct_name = self.file['digitStruct']['name']
         self.digit_struct_bbox = self.file['digitStruct']['bbox']
+
 
     def get_img_name(self,n):
         '''
@@ -16,6 +18,7 @@ class DigitStruct:
         '''
         name = ''.join([chr(c[0]) for c in self.file[self.digit_struct_name[n][0]].value])
         return name
+
 
     def bbox_helper(self,attr):
         '''bbox_helper abstracts the bbox or an array of bbox.
@@ -27,6 +30,7 @@ class DigitStruct:
             attr = [attr.value[0][0]]
         return attr
 
+
     def get_bbox(self,n):
         '''getBbox returns a dict of data for the n(th) bbox. 
           accepts: index for digit structure
@@ -35,27 +39,25 @@ class DigitStruct:
         '''
         bbox = {}
         bb = self.digit_struct_bbox[n].item()
-        bbox['height'] = self.bbox_helper(self.file[bb]["height"])
+       
         bbox['label'] = self.bbox_helper(self.file[bb]["label"])
-        bbox['left'] = self.bbox_helper(self.file[bb]["left"])
         bbox['top'] = self.bbox_helper(self.file[bb]["top"])
+        bbox['left'] = self.bbox_helper(self.file[bb]["left"])
+        bbox['height'] = self.bbox_helper(self.file[bb]["height"])
         bbox['width'] = self.bbox_helper(self.file[bb]["width"])
+        
         return bbox
+
 
     def get_digit_structure(self,n):
         structure = self.get_bbox(n)
         structure['name'] = self.get_img_name(n)
         return structure
 
-    # getAllDigitStructure returns all the digitStruct from the input file.     
-    def get_all_digit_structure(self):
-        x = [self.get_digit_structure(i) for i in range(len(self.digit_struct_name))]
-        return x
 
     def get_all_imgs_and_digit_structure(self):
-        imgs =[]
         structs = []
         for i in range(len(self.digit_struct_name)):
-            imgs.append(self.get_img_name(i))
             structs.append(self.get_digit_structure(i))
-        return imgs, structs
+        print("Done extract")
+        return structs

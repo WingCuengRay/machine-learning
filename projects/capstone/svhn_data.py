@@ -4,6 +4,7 @@ import numpy as np
 import scipy
 import sys
 import tarfile
+import PIL.Image as Image
 
 from digit_struct import DigitStruct
 
@@ -15,13 +16,20 @@ from six.moves.urllib.request import urlretrieve
 # '''for debugging'''
 from pdb import set_trace as bp
 
+
 DATA_PATH = "data/svhn/"
 CROPPED_DATA_PATH = DATA_PATH+"cropped"
 FULL_DATA_PATH = DATA_PATH+"full"
-FORMAT_2_FILES = ['{}_32x32.mat'.format(s) for s in ['train', 'test', 'extra']]
 PIXEL_DEPTH = 255
 NUM_LABELS = 10
+
+OUT_HEIGHT = 32
+OUT_WIDTH = 32
+NUM_CHANNELS = 1
+MAX_LABELS = 5
+
 last_percent_reported = None
+
 
 def read_data_file(file_name):
 	file = open(file_name, 'rb')
@@ -29,16 +37,19 @@ def read_data_file(file_name):
 	file.close()
 	return data
 
+
 def read_digit_struct(data_path):
 	struct_file = os.path.join(data_path, "digitStruct.mat")
 	dstruct = DigitStruct(struct_file)
-	imgs, structs = dstruct.get_all_imgs_and_digit_structure()
-	return imgs, structs
+	structs = dstruct.get_all_imgs_and_digit_structure()
+	return structs
+
 
 def extract_data_file(file_name):
 	tar = tarfile.open(file_name, "r:gz")
 	tar.extractall(FULL_DATA_PATH)
 	tar.close()
+
 
 def convert_imgs_to_array(img_array):
 	rows = img_array.shape[0]
@@ -49,22 +60,19 @@ def convert_imgs_to_array(img_array):
 	#not the most efficent way but can monitor what is happening
 	new_array = np.empty(shape=(num_imgs, rows, cols, chans), dtype=np.float32)
 	for x in range(0, num_imgs):
+		#TODO reuse normalize_img here
 		temp = img_array[:,:,:,x]
-		vec = temp
+		#vec = temp
 		#normalize pixels to 0 and 1. 0 is pure white, 1 is pure black.
-  		norm_vec = (255-vec)*1.0/255.0  
+  		norm_vec = (255-temp)*1.0/255.0  
 		new_array[x] = norm_vec
 	return new_array
+
 
 def convert_labels_to_one_hot(labels):
 	labels = (np.arange(NUM_LABELS) == labels[:,None]).astype(np.float32)
 	return labels
 
-# def sainty_check(imgs_array):
-# 	ri = randint(0,len(labels)-1)
-# 	print(labels[ri])
-# 	plt.imshow(imgs[:,:,:,ri])
-# 	plt.show()
 
 def process_data_file(file):
 	data = loadmat(file)
@@ -74,6 +82,7 @@ def process_data_file(file):
 	labels_one_hot = convert_labels_to_one_hot(labels)
 	img_array = convert_imgs_to_array(imgs)
 	return img_array, labels_one_hot
+
 
 def get_data_file_name(master_set, dataset):
 	if master_set == "cropped":
@@ -96,6 +105,7 @@ def get_data_file_name(master_set, dataset):
 		raise Exception('Master data set must be full or cropped')
 	return data_file_name;
 
+
 def make_data_dirs(master_set):
 	if master_set == "cropped":
 		if not os.path.exists(CROPPED_DATA_PATH):
@@ -105,6 +115,37 @@ def make_data_dirs(master_set):
 			os.makedirs(FULL_DATA_PATH)
 	else:
 		raise Exception('Master data set must be full or cropped')
+
+def handle_tar_file(file_pointer):
+	''' Extract and return the data file '''
+	print ("extract", file_pointer)
+	extract_data_file(file_pointer)
+	extract_dir = os.path.splitext(os.path.splitext(file_pointer)[0])[0]
+
+	structs = read_digit_struct(extract_dir)
+	data_count = len(structs)
+
+
+	img_data = np.ndarray([data_count,OUT_HEIGHT, OUT_WIDTH, NUM_CHANNELS], dtype='float32')
+	labels = np.ndarray([data_count, MAX_LABELS+1], dtype='int8')
+
+	for s in range(data_count):
+		lbls = structs[s]['label']
+		file_name = os.path.join(extract_dir, structs[s]['name'])
+		top = structs[s]['top']
+		left = structs[s]['left']
+		height = structs[s]['height']
+		width = structs[s]['width']
+		if( len(lbls) < MAX_LABELS):
+			label_array = create_label_array(lbls)
+			labels[s] = label_array
+			img_array = create_img_array(file_name, top, left, height, width, OUT_HEIGHT, OUT_WIDTH)
+			img_data[s] = img_array
+		else:
+			print("Skipping {}, only images with less than {} numbers are allowed!").format(file_name, MAX_LABELS)
+
+	return img_data, labels
+
 
 def create_svhn(dataset, master_set):
 	path = DATA_PATH+master_set
@@ -116,18 +157,16 @@ def create_svhn(dataset, master_set):
 		print("creating data dirs")
 		make_data_dirs(master_set)
 	if os.path.isfile(data_file_pointer):
-		''' Use the existing file '''
-		target_file = data_file_pointer
-		print "File Exists"
-		return read_data_file(target_file)
+		if(data_file_pointer.endswith("tar.gz")):
+			return handle_tar_file(data_file_pointer)
+		else:
+			''' Use the existing file '''
+			extract_data = handle_tar_file(data_file_pointer)
+			return extract_data
 	else:
 		new_file = download_data_file(path, data_file_name)
 		if(new_file.endswith("tar.gz")):
-			''' Extract and return the data file '''
-			print ("extract", new_file)
-			extract_data_file(new_file)
-			extract_dir = os.path.splitext(os.path.splitext(new_file)[0])[0]
-			return read_digit_struct(extract_dir)
+			return handle_tar_file(new_file)
 		else:
 			''' Return the data file '''
 			return read_data_file(new_file)
@@ -201,17 +240,57 @@ def generate_cropped_files():
 	write_npy_file(test_data, test_labels, 'test', 'cropped')
 	print("Cropped Files Done!!!")
 
+
+def create_label_array(el):
+	"""[count, digit, digit, digit, digit, digit]"""
+	num_digits = len(el) # first element of array holds the count
+	labels_array = np.ones([MAX_LABELS+1], dtype=int) * 10
+	labels_array[0] = num_digits
+	for n in range(num_digits):
+		if el[n] == 10: el[n] = 0 #reassign 0 as 10 for one-hot encoding
+		labels_array[n+1] = el[n]
+	#print(labels_array)
+	return labels_array 
+
+
+def create_img_array(file_name, top, left, height, width, out_height, out_width):
+	img = Image.open(file_name)
+
+	img_top = np.amin(top)
+	img_left = np.amin(left)
+	img_height = np.amax(top) + height[np.argmax(top)] - img_top
+	img_width = np.amax(left) + width[np.argmax(left)] - img_left
+        
+	box_left = np.floor(img_left - 0.1 * img_width)
+	box_top = np.floor(img_top - 0.1 * img_height)
+	box_right = np.amin([np.ceil(box_left + 1.2 * img_width), img.size[0]])
+	box_bottom = np.amin([np.ceil(img_top + 1.2 * img_height), img.size[1]])
+
+	img = img.crop((box_left, box_top, box_right, box_bottom)).resize([out_height, out_width], Image.ANTIALIAS)
+	img = np.dot(np.array(img, dtype='float32'), [[0.2989],[0.5870],[0.1140]])
+	
+	mean = np.mean(img, dtype='float32')
+	std = np.std(img, dtype='float32', ddof=1)
+	if std < 1e-4: std = 1.
+	img_array = (img - mean) / std
+
+	return img_array
+
+
 def generate_full_files():
 	train_data, train_labels = create_svhn('train', 'full')
+	train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)
+	
 	write_npy_file(train_data, train_labels, 'train', 'full')
-
+	write_npy_file(valid_data, valid_labels, 'valid', 'full')
+	
 	test_data, test_labels = create_svhn('test', 'full')
 	write_npy_file(test_data, test_labels, 'test', 'full')
 
 	#extra_data, extra_labels = create_svhn('full', 'extra')
-	#write_npy_file(valid_data, valid_labels, 'valid', 'full')
 	print("Full Files Done!!!")
 
+
 if __name__ == '__main__':
-	generate_cropped_files()
+	#generate_cropped_files()
 	generate_full_files()
