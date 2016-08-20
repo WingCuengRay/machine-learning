@@ -45,6 +45,7 @@ def prepare_log_dir():
     tf.gfile.DeleteRecursively(TENSORBOARD_SUMMARIES_DIR)
   tf.gfile.MakeDirs(TENSORBOARD_SUMMARIES_DIR)
 
+
 def fill_feed_dict(data, labels, x, y_, step):
   size = labels.shape[0]
   # Compute the offset of the current minibatch in the data.
@@ -59,7 +60,6 @@ def _activation_summary(x):
   tensor_name = x.op.name
   tf.histogram_summary(tensor_name + '/activations', x)
   tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
-
 
 
 def train_classification(train_data, train_labels, valid_data, valid_labels, test_data, test_labels, train_size, saved_weights_path):
@@ -246,6 +246,9 @@ def train_classification(train_data, train_labels, valid_data, valid_labels, tes
       #Save the variables to disk.
       save_path = saver.save(sess, "classifier.ckpt")
       print("Model saved in file: %s" % save_path)
+      print('Test Accuracy: %.2f%%' % error_rate(test_prediction.eval(), test_labels))
+      train_writer.close()
+
       # test_feed_dict = fill_feed_dict(test_data, test_labels, X, y_, step)
       # _, l, lr, test_predictions = sess.run([optimizer, loss, learning_rate, prediction], feed_dict=test_feed_dict, options=run_options, run_metadata=run_metadata)
       # test_summary, _, l, lr, test_predictions = sess.run([merged, optimizer, loss, learning_rate, prediction], feed_dict=test_feed_dict, options=run_options, run_metadata=run_metadata)
@@ -253,9 +256,7 @@ def train_classification(train_data, train_labels, valid_data, valid_labels, tes
       # test_writer.add_summary(test_summary, step)
       #test_error_rate = error_rate(test_predictions, test_feed_dict[y_])
       #print('Test Accuracy: %.2f%%' % test_error_rate)
-      print('Test Accuracy: %.2f%%' % error_rate(test_prediction.eval(), test_labels))
-      
-      train_writer.close()
+
       #valid_writer.close()
       #test_writer.close()
 
@@ -265,13 +266,20 @@ def main(saved_weights_path):
   train_data, train_labels= load_svhn_data("train", "cropped")
   valid_data, valid_labels = load_svhn_data("valid", "cropped")
   test_data, test_labels = load_svhn_data("test", "cropped")
-  #temp
-  test_data = test_data[0:1000]
-  test_labels = valid_labels[0:1000]
   
+  test_dataX = test_data[0:3000]
+  test_labelsX = test_labels[0:3000]
+  
+  print("Training", train_data.shape)
+  print("Valid", valid_data.shape)
+  print("Test", test_dataX.shape)
+  #temp
+  #test_data = test_data
+  #test_labels = valid_labels
+
   train_size = train_labels.shape[0]
   saved_weights_path = None
-  train_classification(train_data, train_labels, valid_data, valid_labels, test_data, test_labels, train_size, saved_weights_path)
+  train_classification(train_data, train_labels, valid_data, valid_labels, test_dataX, test_labelsX, train_size, saved_weights_path)
   
 
 if __name__ == '__main__':
