@@ -15,7 +15,7 @@ from pdb import set_trace as bp
 
 #Run Options 
 BATCH_SIZE = 32
-NUM_EPOCHS = 256
+NUM_EPOCHS = 100
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_regression_logs'
 
 #Image Settings 
