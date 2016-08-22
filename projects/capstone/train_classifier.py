@@ -10,26 +10,18 @@ import tensorflow as tf
 
 from svhn_data import load_svhn_data
 from datetime import datetime
-#from svhn_model import classification_head
+from svhn_model import classification_head
 from pdb import set_trace as bp
 
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_classifier_logs'
 NUM_LABELS = 10
-BATCH_SIZE = 256
-NUM_EPOCHS = 100
 IMG_ROWS = 32
 IMG_COLS = 32
 NUM_CHANNELS = 3
 
-DEPTH_3 =  256
-DEPTH_4 = 512
-DROPOUT = 0.75
-num_hidden1 = 64
-#num_hidden1 = 1024
-PATCH_SIZE = 5
-DEPTH_1 = 64
-DEPTH_2 = 64
 
+BATCH_SIZE = 256
+NUM_EPOCHS = 100
 
 
 def error_rate(predictions, labels):
@@ -56,15 +48,8 @@ def fill_feed_dict(data, labels, x, y_, step):
   return {x: batch_data, y_: batch_labels}
 
 
-def _activation_summary(x):
-  tensor_name = x.op.name
-  tf.histogram_summary(tensor_name + '/activations', x)
-  tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
-
 
 def train_classification(train_data, train_labels, valid_data, valid_labels, test_data, test_labels, train_size, saved_weights_path):
-  graph = tf.Graph()
-  with graph.as_default():
     global_step = tf.Variable(0, trainable=False)    
     
     # This is where training samples and labels are fed to the graph.
@@ -79,84 +64,6 @@ def train_classification(train_data, train_labels, valid_data, valid_labels, tes
       tf.image_summary('test_input', X_test, 10)
 
     y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, NUM_LABELS])
-
-###########################################
-    #Variables
-    conv1_weights = tf.get_variable("Weights_1", shape=[PATCH_SIZE, PATCH_SIZE, NUM_CHANNELS, DEPTH_1],\
-             initializer=tf.contrib.layers.xavier_initializer_conv2d())
-    conv1_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_1]), name='Biases_1')
-
-    conv2_weights = tf.get_variable("Weights_2", shape=[PATCH_SIZE, PATCH_SIZE, DEPTH_1, DEPTH_2],\
-             initializer=tf.contrib.layers.xavier_initializer_conv2d())
-    conv2_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_2]), name='Biases_2')
-
-    conv3_weights = tf.get_variable("Weights_3", shape=[PATCH_SIZE, PATCH_SIZE, DEPTH_2, DEPTH_3],\
-             initializer=tf.contrib.layers.xavier_initializer_conv2d())
-    conv3_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_3]), name='Biases_3')
-
-    cl_l3_weights = tf.get_variable("Classifer_Weights_1", shape=[4096, 384], initializer=tf.contrib.layers.xavier_initializer())
-    cl_l3_biases = tf.Variable(tf.constant(0.0, shape=[384]), name='Classifer_Biases_1')
-
-    cl_l4_weights = tf.get_variable("Classifer_Weights_2", shape=[384, 192], initializer=tf.contrib.layers.xavier_initializer())
-    cl_l4_biases = tf.Variable(tf.constant(0.0, shape=[192]), name='Classifer_Biases_2')
-
-    cl_out_weights = tf.get_variable("Classifer_Weights_3", shape=[192, 10], initializer=tf.contrib.layers.xavier_initializer())
-    cl_out_biases = tf.Variable(tf.constant(0.0, shape=[10]), name='Classifer_Biases_3')
-
-    def convolution_model(data_node):
-      '''Layer 1'''
-      with tf.variable_scope('conv_1') as scope:
-        conv1 = tf.nn.conv2d(data_node, conv1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        bias1 = tf.nn.bias_add(conv1, conv1_biases)
-        relu1 = tf.nn.relu(bias1,  name=scope.name)
-        _activation_summary(relu1)
-        pool1 = tf.nn.max_pool(relu1, ksize=[1, 3, 3, 1], strides=[1,2,2,1], padding='SAME', name='pool1')
-        norm1 = tf.nn.lrn(pool1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
-        #print("Pool 1 shape", pool1.get_shape().as_list())
-
-      '''Layer 2'''
-      with tf.variable_scope('conv_2') as scope:
-        conv2 = tf.nn.conv2d(pool1, conv2_weights, strides=[1,1,1,1], padding='SAME')
-        bias2 = tf.nn.bias_add(conv2, conv2_biases)
-        relu2 = tf.nn.relu(bias2, name=scope.name)
-        _activation_summary(relu2)
-        norm2 = tf.nn.lrn(relu2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm2')
-        pool2 = tf.nn.max_pool(norm2, ksize=[1,3,3,1], strides=[1,2,2,1], padding='SAME', name='pool2')
-      return pool2
-
-
-    def classification_head(X, train=False):
-      conv_layer = convolution_model(X)
-      shape = conv_layer.get_shape().as_list()
-      dim = shape[1] * shape[2] * shape[3]
-
-      #apply dopout to training.
-      if train == True:
-        print("using drop out")
-        fc_out = tf.nn.dropout(conv_layer, DROPOUT)
-      else:
-         print("not using dropout")
-
-      #Fully Connected Layer
-      with tf.variable_scope('fully_connected_1') as scope:
-        fc1 = tf.reshape(conv_layer, [shape[0], -1])
-        fc1 = tf.add(tf.matmul(fc1, cl_l3_weights), cl_l3_biases)
-        fc_out = tf.nn.relu(fc1, name=scope.name)
-        _activation_summary(fc_out)
-     
-      #Fully Connected Layer
-      with tf.variable_scope('fully_connected_2') as scope:
-        fc2 = tf.add(tf.matmul(fc_out, cl_l4_weights), cl_l4_biases)
-        fc2_out = tf.nn.relu(fc2, name=scope.name)
-        _activation_summary(fc2_out)
-
-      with tf.variable_scope("softmax_linear") as scope:
-        logits = tf.matmul(fc2_out, cl_out_weights) + cl_out_biases
-        _activation_summary(logits)
-
-      '''output class scores'''
-      return logits #, weights
-##############################################################################
 
     # Training computation: logits + cross-entropy loss.
     logits = classification_head(X_train, True)  
@@ -180,7 +87,7 @@ def train_classification(train_data, train_labels, valid_data, valid_labels, tes
 
     # Create a local session to run the training.
     start_time = time.time()
-    with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=False)) as sess:
+    with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
       
       # Restore variables from disk.
       if(saved_weights_path):
@@ -273,9 +180,6 @@ def main(saved_weights_path):
   print("Training", train_data.shape)
   print("Valid", valid_data.shape)
   print("Test", test_dataX.shape)
-  #temp
-  #test_data = test_data
-  #test_labels = valid_labels
 
   train_size = train_labels.shape[0]
   saved_weights_path = None

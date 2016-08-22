@@ -13,8 +13,8 @@ from sklearn.cross_validation import train_test_split
 from itertools import product
 from six.moves.urllib.request import urlretrieve
 
-# '''for debugging'''
-from pdb import set_trace as bp
+'''for debugging'''
+#from pdb import set_trace as bp
 
 
 DATA_PATH = "data/svhn/"
@@ -23,9 +23,9 @@ FULL_DATA_PATH = DATA_PATH+"full"
 PIXEL_DEPTH = 255
 NUM_LABELS = 10
 
-OUT_HEIGHT = 32
-OUT_WIDTH = 32
-NUM_CHANNELS = 1
+OUT_HEIGHT = 64
+OUT_WIDTH = 64
+NUM_CHANNELS = 3
 MAX_LABELS = 5
 
 last_percent_reported = None
@@ -62,7 +62,6 @@ def convert_imgs_to_array(img_array):
 	for x in range(0, num_imgs):
 		#TODO reuse normalize_img here
 		temp = img_array[:,:,:,x]
-		#vec = temp
 		#normalize pixels to 0 and 1. 0 is pure white, 1 is pure black.
   		norm_vec = (255-temp)*1.0/255.0  
 		new_array[x] = norm_vec
@@ -105,7 +104,6 @@ def get_data_file_name(master_set, dataset):
 		raise Exception('Master data set must be full or cropped')
 	return data_file_name;
 
-
 def make_data_dirs(master_set):
 	if master_set == "cropped":
 		if not os.path.exists(CROPPED_DATA_PATH):
@@ -125,25 +123,22 @@ def handle_tar_file(file_pointer):
 	structs = read_digit_struct(extract_dir)
 	data_count = len(structs)
 
+	img_data = np.zeros((data_count, OUT_HEIGHT, OUT_WIDTH, NUM_CHANNELS), dtype='float32') 
+	labels=np.zeros((data_count, MAX_LABELS+1), dtype='int8')
 
-	img_data = np.ndarray([data_count,OUT_HEIGHT, OUT_WIDTH, NUM_CHANNELS], dtype='float32')
-	labels = np.ndarray([data_count, MAX_LABELS+1], dtype='int8')
-
-	for s in range(data_count):
-		lbls = structs[s]['label']
-		file_name = os.path.join(extract_dir, structs[s]['name'])
-		top = structs[s]['top']
-		left = structs[s]['left']
-		height = structs[s]['height']
-		width = structs[s]['width']
+	for i in range(data_count):
+		lbls = structs[i]['label']
+		file_name = os.path.join(extract_dir, structs[i]['name'])
+		top = structs[i]['top']
+		left = structs[i]['left']
+		height = structs[i]['height']
+		width = structs[i]['width']
 		if( len(lbls) < MAX_LABELS):
-			label_array = create_label_array(lbls)
-			labels[s] = label_array
-			img_array = create_img_array(file_name, top, left, height, width, OUT_HEIGHT, OUT_WIDTH)
-			img_data[s] = img_array
+			labels[i] = create_label_array(lbls)
+			img_data[i] = create_img_array(file_name, top, left, height, width, OUT_HEIGHT, OUT_WIDTH)
 		else:
 			print("Skipping {}, only images with less than {} numbers are allowed!").format(file_name, MAX_LABELS)
-
+		
 	return img_data, labels
 
 
@@ -161,7 +156,7 @@ def create_svhn(dataset, master_set):
 			return handle_tar_file(data_file_pointer)
 		else:
 			''' Use the existing file '''
-			extract_data = handle_tar_file(data_file_pointer)
+			extract_data = read_data_file(data_file_pointer)
 			return extract_data
 	else:
 		new_file = download_data_file(path, data_file_name)
@@ -213,7 +208,7 @@ def get_expected_bytes(filename):
 	return byte_size
 
 def train_validation_spit(train_dataset, train_labels):
-	train_dataset, validation_dataset, train_labels, validation_labels = train_test_split(train_dataset, train_labels, test_size=0.33, random_state = 42)
+	train_dataset, validation_dataset, train_labels, validation_labels = train_test_split(train_dataset, train_labels, test_size=0.1, random_state = 42)
 	return train_dataset, validation_dataset, train_labels, validation_labels
 
 def write_npy_file(data_array, lbl_array, data_set_name, data_path):
@@ -229,17 +224,6 @@ def load_svhn_data(data_type, data_set_name):
 	labels = np.load(os.path.join(path, data_set_name+'_'+data_type+'_labels.npy'))
 	return imgs, labels
 
-def generate_cropped_files():
-	train_data, train_labels = create_svhn('train', 'cropped')
-	train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)	
-	
-	write_npy_file(train_data, train_labels, 'train', 'cropped')
-	write_npy_file(valid_data, valid_labels, 'valid', 'cropped')
-
-	test_data, test_labels = create_svhn('test', 'cropped')
-	write_npy_file(test_data, test_labels, 'test', 'cropped')
-	print("Cropped Files Done!!!")
-
 
 def create_label_array(el):
 	"""[count, digit, digit, digit, digit, digit]"""
@@ -249,7 +233,6 @@ def create_label_array(el):
 	for n in range(num_digits):
 		if el[n] == 10: el[n] = 0 #reassign 0 as 10 for one-hot encoding
 		labels_array[n+1] = el[n]
-	#print(labels_array)
 	return labels_array 
 
 
@@ -267,14 +250,10 @@ def create_img_array(file_name, top, left, height, width, out_height, out_width)
 	box_bottom = np.amin([np.ceil(img_top + 1.2 * img_height), img.size[1]])
 
 	img = img.crop((box_left, box_top, box_right, box_bottom)).resize([out_height, out_width], Image.ANTIALIAS)
-	img = np.dot(np.array(img, dtype='float32'), [[0.2989],[0.5870],[0.1140]])
-	
-	mean = np.mean(img, dtype='float32')
-	std = np.std(img, dtype='float32', ddof=1)
-	if std < 1e-4: std = 1.
-	img_array = (img - mean) / std
+	pix = np.array(img)
 
-	return img_array
+  	norm_pix = (255-pix)*1.0/255.0  
+	return norm_pix
 
 
 def generate_full_files():
@@ -291,6 +270,18 @@ def generate_full_files():
 	print("Full Files Done!!!")
 
 
+def generate_cropped_files():
+	train_data, train_labels = create_svhn('train', 'cropped')
+	train_data, valid_data, train_labels, valid_labels = train_validation_spit(train_data, train_labels)	
+	
+	write_npy_file(train_data, train_labels, 'train', 'cropped')
+	write_npy_file(valid_data, valid_labels, 'valid', 'cropped')
+
+	test_data, test_labels = create_svhn('test', 'cropped')
+	write_npy_file(test_data, test_labels, 'test', 'cropped')
+	print("Cropped Files Done!!!")
+
+
 if __name__ == '__main__':
-	#generate_cropped_files()
+	generate_cropped_files()
 	generate_full_files()

@@ -64,6 +64,11 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
+#Capstone
+/projects/capstone/*.png
+/projects/capstone/*.meta
+/projects/capstone/*.ckpt
+
 #Capstone Data
 /projects/capstone/data
 *.npy
