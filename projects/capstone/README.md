@@ -1,3 +1,30 @@
-# Project 5: Capstone
+# Project 5: Deep Learning Capstone Project. Decoding a Sequence of Digits in Real World Photos.
 
-The Capstone Project for the Machine Learning Engineer Nanodegree does not have any requirements for code, libraries, or datasets. You are free to choose your project as you wish! For students who are unable to construct a capstone project on their own imagination, a pre-built project has been provided in `robot_motion_planning`.
+## Installation
+`
+git clone https://github.com/bdiesel/machine-learning.git
+cd /machine-learning/projects/capstone
+python svhn_data.py
+`
+
+## Libraries and Dependicies 
+The following Python 2.7 libraries are required
+numpy
+tensorflow
+scipy
+PIL
+sklearn
+six
+
+
+## Train your own model
+First train the classifer
+`python train_classifier.py`
+Next train the localizer
+`python train_regressor.py`
+
+
+## Run on your own images.
+`python svhn_detect.py`
+
+

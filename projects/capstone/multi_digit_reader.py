@@ -2,68 +2,71 @@ import sys
 import os
 import numpy as np
 import tensorflow as tf
-import pylab
 import PIL.Image as Image
-import matplotlib
+import matplotlib.pyplot as plt
+
 from svhn_model import regression_head
-
-
+from svhn_data import load_svhn_data
 from pdb import set_trace as bp
 
+test_dataset, test_labels = load_svhn_data("test", "full")
+WEIGHTS_FILE = "regression.ckpt"
+
+
+def prediction_to_string(pred_array):
+    pred_str = ""
+    for i in range(len(pred_array)):
+        if pred_array[i] != 10:
+            pred_str += str(pred_array[i])
+        else:
+            return pred_str
+    return pred_str
+
+
 def detect(img_path, saved_model_weights):
-  img = Image.open(img_path)
-  img = img.resize((64,64), Image.ANTIALIAS)
-  
-  img_data = matplotlib.pyplot.imshow(img)
-  pylab.show()
- 
-  
-  img = np.array(img)
-  batch_size = 1
-  img_rows = img.shape[0]
-  img_cols = img.shape[1]
-  img_chans= img.shape[2]
+    sample_img = Image.open(img_path)
+    plt.imshow(sample_img)
+    plt.show()
 
-  X_test = tf.placeholder(tf.float32, shape=(1, img_rows, img_cols, img_chans))
-  #y_ = tf.placeholder(tf.int32, shape=(1, 11))
- 
-  test_prediction = tf.pack([tf.nn.softmax(regression_head(X_test)[0]),\
-                    tf.nn.softmax(regression_head(X_test)[1]),\
-                    tf.nn.softmax(regression_head(X_test)[2]),\
-                    tf.nn.softmax(regression_head(X_test)[3]),\
-                    tf.nn.softmax(regression_head(X_test)[4])])
-  
-  #create a loader
-  saver = tf.train.Saver()
-  with tf.Session() as sess:
-	print("Loading Saved Checkpoints From:", saved_model_weights)
-	#place the weights into the model.
-	saver.restore(sess, saved_model_weights)
-	print("Model restored.")
+    pix = np.array(sample_img)
+    norm_pix = (255-pix)*1.0/255.0
+    exp = np.expand_dims(norm_pix, axis=0)
 
-	norm_img = (255-img)*1.0/255.0
-	exp = np.expand_dims(norm_img, axis=0)  
+    X = tf.placeholder(tf.float32, shape=(1, 64, 64, 3))
+    [logits_1, logits_2, logits_3, logits_4, logits_5] = regression_head(X)
 
-	#feed_dict = {X_train: img}
+    predict = tf.pack([tf.nn.softmax(logits_1),
+                      tf.nn.softmax(logits_2),
+                      tf.nn.softmax(logits_3),
+                      tf.nn.softmax(logits_4),
+                      tf.nn.softmax(logits_5)])
 
-	test_prediction = sess.run(test_prediction, feed_dict={X_test : exp, })
-	
-	print("tp:", test_prediction)
-	
-	#predictions = sess.run(prediction, feed_dict=feed_dict)
+    best_prediction = tf.transpose(tf.argmax(predict, 2))
 
-	#print("Best Prediction is:", np.argmax(predictions))
+    saver = tf.train.Saver()
+    with tf.Session() as session:
+        saver.restore(session, "regression.ckpt")
+        print "Model restored."
+
+        print "Initialized"
+        feed_dict = {X: exp}
+        predictions = session.run(best_prediction, feed_dict=feed_dict)
+        pred = prediction_to_string(predictions[0])
+        print "Best Prediction", pred
+
 
 if __name__ == "__main__":
-  img_path = None
-  if len(sys.argv) > 1:
-    print("Reading Image file:", sys.argv[1])
-    if os.path.isfile(sys.argv[1]):
-      img_path = sys.argv[1]
+    img_path = None
+    if len(sys.argv) > 1:
+        print("Reading Image file:", sys.argv[1])
+        if os.path.isfile(sys.argv[1]):
+            img_path = sys.argv[1]
+        else:
+            raise EnvironmentError("Image file cannot be opened.")
     else:
-      raise EnvironmentError("I'm sorry, I'm afraid I can't find that file.")
-  else:
-     raise EnvironmentError("You must pass an image file to process")
-  
-  saved_model_weights = "regression.ckpt"
-  detect(img_path, saved_model_weights)
+        raise EnvironmentError("You must pass an image file to process")
+    if os.path.isfile(WEIGHTS_FILE):
+        saved_model_weights = WEIGHTS_FILE
+    else:
+        raise IOError("Cannot find checkpoint file. Please run train_regressor.py")
+    detect(img_path, saved_model_weights)
