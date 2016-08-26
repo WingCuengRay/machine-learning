@@ -1,6 +1,6 @@
 import tensorflow as tf
-from pdb import set_trace as bp
 
+# Image Parameters
 NUM_CHANNELS = 3
 CL_NUM_LABELS = 10
 NUM_LABELS = CL_NUM_LABELS + 1  # 0-9, + 1 blank

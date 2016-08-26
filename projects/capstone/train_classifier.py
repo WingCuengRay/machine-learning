@@ -9,9 +9,9 @@ import os
 import tensorflow as tf
 
 from svhn_data import load_svhn_data
-from datetime import datetime
 from svhn_model import classification_head
-from pdb import set_trace as bp
+from datetime import datetime
+
 
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_classifier_logs'
 NUM_LABELS = 10

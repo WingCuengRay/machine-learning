@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 from svhn_model import regression_head
 from svhn_data import load_svhn_data
-from pdb import set_trace as bp
 
 test_dataset, test_labels = load_svhn_data("test", "full")
 WEIGHTS_FILE = "regression.ckpt"

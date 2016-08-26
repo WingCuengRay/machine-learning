@@ -13,13 +13,15 @@ python svhn_data.py
 
 ## Libraries and Dependicies 
 The following Python 2.7 libraries are required:
+* h5py
+* matplotlib
 * numpy
+* PIL
 * tensorflow
 * scipy
-* PIL
-* sklearn
 * six
-* h5py
+* sklearn
+
 
 
 ##Step 1: Download Data
