@@ -150,7 +150,7 @@ def create_svhn(dataset, master_set):
 
     if (not os.path.exists(data_file_pointer)):
         ''' Create the data dir structure '''
-        print("creating data dirs")
+        print("Creating data directories")
         make_data_dirs(master_set)
     if os.path.isfile(data_file_pointer):
         if(data_file_pointer.endswith("tar.gz")):
