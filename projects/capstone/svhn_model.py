@@ -16,21 +16,22 @@ DROPOUT = 0.85
 
 
 # Convolution Weight and Bias Variables
-conv1_weights = tf.get_variable("W1", shape=[PATCH_SIZE, PATCH_SIZE,
+conv1_weights = tf.get_variable("Weights_1", shape=[PATCH_SIZE, PATCH_SIZE,
                                 NUM_CHANNELS, DEPTH_1])
-conv1_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_1]), name='B1')
+conv1_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_1]), name='Biases_1')
 
-conv2_weights = tf.get_variable("W2", shape=[PATCH_SIZE, PATCH_SIZE,
+conv2_weights = tf.get_variable("Weights_2", shape=[PATCH_SIZE, PATCH_SIZE,
                                 DEPTH_1, DEPTH_2])
-conv2_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_2]), name='B2')
+conv2_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_2]), name='Biases_2')
 
-conv3_weights = tf.get_variable("W3", shape=[PATCH_SIZE, PATCH_SIZE,
+conv3_weights = tf.get_variable("Weights_3", shape=[PATCH_SIZE, PATCH_SIZE,
                                 DEPTH_2, DEPTH_3])
-conv3_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_3]), name='B3')
+conv3_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_3]), name='Biases_3')
 
-conv4_weights = tf.get_variable("W4", shape=[PATCH_SIZE,
+
+conv4_weights = tf.get_variable("Weights_4", shape=[PATCH_SIZE,
                                 PATCH_SIZE, DEPTH_3, num_hidden1])
-conv4_biases = tf.Variable(tf.constant(1.0, shape=[num_hidden1]), name='B4')
+conv4_biases = tf.Variable(tf.constant(1.0, shape=[num_hidden1]), name='Biases_4')
 
 # Regression Weight and Bias Variables
 reg1_weights = tf.get_variable("WS1", shape=[num_hidden1, NUM_LABELS])
@@ -66,12 +67,12 @@ cl_out_biases = tf.Variable(tf.constant(0.0, shape=[CL_NUM_LABELS]),
 
 def activation_summary(x):
     tensor_name = x.op.name
-    tf.histogram_summary(tensor_name + '/activations', x)
-    tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+    # tf.histogram_summary(tensor_name + '/activations', x)
+    # tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
 
 
 def convolution_model(data):
-    with tf.variable_scope('conv_1') as scope:
+    with tf.variable_scope('conv_1', reuse=True) as scope:
         con = tf.nn.conv2d(data, conv1_weights,
                            [1, 1, 1, 1], 'VALID', name='C1')
         hid = tf.nn.relu(con + conv1_biases)
@@ -111,11 +112,13 @@ def classification_head(data, keep_prob=1.0, train=False):
     shape = conv_layer.get_shape().as_list()
     dim = shape[1] * shape[2] * shape[3]
 
+    # with tf.name_scope('dropout'):
     if train is True:
-        print("using drop out")
+        print("Using drop out")
         fc_out = tf.nn.dropout(conv_layer, DROPOUT)
     else:
-        print("not using dropout")
+        print("Not using dropout")
+        #tf.scalar_summary('dropout_keep_probability', DROPOUT)
 
     # Fully Connected Layer 1
     with tf.variable_scope('fully_connected_1') as scope:
