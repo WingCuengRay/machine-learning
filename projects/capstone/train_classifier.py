@@ -24,9 +24,9 @@ BATCH_SIZE = 256
 NUM_EPOCHS = 256
 
 # LEARING RATE HYPER PARAMS
-LEARN_RATE = 0.05
-DECAY_RATE = 0.975
-
+LEARN_RATE = 0.1
+DECAY_RATE = 0.95
+STAIRCASE = True
 
 def prepare_log_dir():
     '''Clears the log files then creates new directories to place
@@ -57,34 +57,35 @@ def train_classification(train_data, train_labels,
     with tf.name_scope('input'):
         images_placeholder = tf.placeholder(tf.float32,
                                             shape=[BATCH_SIZE, IMG_ROWS,
-                                                   IMG_COLS, NUM_CHANNELS])
-
+                                                   IMG_COLS, NUM_CHANNELS], name="Images_Input")
+        labels_placeholder = tf.placeholder(tf.float32, shape=[BATCH_SIZE, NUM_LABELS], name="Labels_Input")
 
     with tf.name_scope('image'):
         tf.image_summary('train_input', images_placeholder, 10)
 
-    labels_placeholder = tf.placeholder(tf.float32, shape=[BATCH_SIZE, NUM_LABELS])
+
 
     # Training computation: logits + cross-entropy loss.
     logits = classification_head(images_placeholder, train=True)
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+    with tf.name_scope('loss'):
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
                           logits, labels_placeholder))
-
+        tf.scalar_summary('loss', loss)
     learning_rate = tf.train.exponential_decay(LEARN_RATE,
                                                global_step*BATCH_SIZE,
                                                train_size,
                                                DECAY_RATE,
-                                               staircase=True)
+                                               staircase=STAIRCASE)
 
     tf.scalar_summary('learning_rate', learning_rate)
     '''Optimizer: set up a variable that's incremented
       once per batch and controls the learning rate decay.'''
-    optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(loss, global_step=global_step)
+
+    with tf.name_scope('train'):
+        optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
     # Predictions for the training, validation, and test data.
     train_prediction = tf.nn.softmax(classification_head(images_placeholder, train=False))
-    valid_prediction = tf.nn.softmax(classification_head(images_placeholder, train=False))
-    test_prediction = tf.nn.softmax(classification_head(images_placeholder, train=False))
 
     init_op = tf.initialize_all_variables()
 
@@ -125,7 +126,7 @@ def train_classification(train_data, train_labels,
         run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_metadata = tf.RunMetadata()
 
-        # Loop through training steps.
+        # Loop through tra ining steps.
         for step in xrange(int(NUM_EPOCHS * train_size) // BATCH_SIZE):
             # Run the graph and fetch some of the nodes.
             # This dictionary maps the batch data (as a numpy array) to the
@@ -137,9 +138,9 @@ def train_classification(train_data, train_labels,
 
             if step % 1000 == 0:
                 valid_feed_dict = fill_feed_dict(valid_data, valid_labels,
-                                                 images_placeholder,
-                                                 labels_placeholder, step)
-                valid_summary, _, l, lr, valid_predictions, valid_acc = sess.run([merged, optimizer, loss, learning_rate, valid_prediction, accuracy], feed_dict=valid_feed_dict, options=run_options, run_metadata=run_metadata)
+                                                  images_placeholder,
+                                                  labels_placeholder, step)
+                valid_summary, _, l, lr, valid_acc = sess.run([merged, optimizer, loss, learning_rate, accuracy], feed_dict=valid_feed_dict, options=run_options, run_metadata=run_metadata)
                 valid_writer.add_run_metadata(run_metadata, 'step%03d' % step)
                 print('Validation Accuracy: %.2f%%' % valid_acc)
                 valid_writer.add_summary(valid_summary, step)
@@ -169,7 +170,7 @@ def train_classification(train_data, train_labels,
 
         test_feed_dict = fill_feed_dict(test_data, test_labels, images_placeholder, labels_placeholder, step)
         summary, acc = sess.run([merged, accuracy], feed_dict=test_feed_dict)
-        print('Test Accuracy: %.2f%%' % acc)
+        print('Test Accuracy: %.5f%%' % acc)
 
         train_writer.close()
         valid_writer.close()

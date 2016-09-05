@@ -29,10 +29,10 @@ NUM_CHANNELS = 3
 NUM_LABELS = 11
 LABELS_LEN = 6
 
-# Learning Rate Hyper Params
-LEARN_RATE = 0.05
-DECAY_STEP = 10000
+# LEARING RATE HYPER PARAMS
+LEARN_RATE = 0.1
 DECAY_RATE = 0.95
+STAIRCASE = True
 
 
 def prepare_log_dir():
@@ -83,23 +83,11 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
     with tf.name_scope('train'):
         optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
-    train_prediction = tf.pack([tf.nn.softmax(regression_head(images_placeholder)[0]),
+    prediction = tf.pack([tf.nn.softmax(regression_head(images_placeholder)[0]),
                                 tf.nn.softmax(regression_head(images_placeholder)[1]),
                                 tf.nn.softmax(regression_head(images_placeholder)[2]),
                                 tf.nn.softmax(regression_head(images_placeholder)[3]),
                                 tf.nn.softmax(regression_head(images_placeholder)[4])])
-
-    valid_prediction = tf.pack([tf.nn.softmax(regression_head(images_placeholder)[0]),
-                                tf.nn.softmax(regression_head(images_placeholder)[1]),
-                                tf.nn.softmax(regression_head(images_placeholder)[2]),
-                                tf.nn.softmax(regression_head(images_placeholder)[3]),
-                                tf.nn.softmax(regression_head(images_placeholder)[4])])
-
-    test_prediction = tf.pack([tf.nn.softmax(regression_head(images_placeholder)[0]),
-                              tf.nn.softmax(regression_head(images_placeholder)[1]),
-                              tf.nn.softmax(regression_head(images_placeholder)[2]),
-                              tf.nn.softmax(regression_head(images_placeholder)[3]),
-                              tf.nn.softmax(regression_head(images_placeholder)[4])])
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -125,11 +113,11 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
 
         with tf.name_scope('accuracy'):
             with tf.name_scope('correct_prediction'):
-                best = tf.transpose(train_prediction, [1, 2, 0])  # permute n_steps and batch_size
+                best = tf.transpose(prediction, [1, 2, 0])  # permute n_steps and batch_size
                 lb = tf.cast(labels_placeholder[:, 1:6], tf.int64)
                 correct_prediction = tf.equal(tf.argmax(best, 1), lb)
             with tf.name_scope('accuracy'):
-                accuracy = tf.reduce_sum(tf.cast(correct_prediction, tf.float32)) / train_prediction.get_shape().as_list()[1] / train_prediction.get_shape().as_list()[0]
+                accuracy = tf.reduce_sum(tf.cast(correct_prediction, tf.float32)) / prediction.get_shape().as_list()[1] / prediction.get_shape().as_list()[0]
             tf.scalar_summary('accuracy', accuracy)
 
         # Prepare vairables for the tensorboard
@@ -149,7 +137,7 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
             # This dictionary maps the batch data (as a numpy array) to the
             train_feed_dict = fill_feed_dict(train_data, train_labels, images_placeholder, labels_placeholder, step)
             _, l, lr, acc, predictions = sess.run([optimizer, loss, learning_rate,
-                                                  accuracy, train_prediction],
+                                                  accuracy, prediction],
                                                   feed_dict=train_feed_dict)
 
             train_batched_labels = train_feed_dict.values()[1]
@@ -165,7 +153,7 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
                 valid_writer.add_summary(valid_summary, step)
 
                 train_summary, _, l, lr, train_acc = sess.run([merged, optimizer, loss, learning_rate, accuracy],
-                    feed_dict = train_feed_dict)
+                    feed_dict=train_feed_dict)
                 train_writer.add_run_metadata(run_metadata, 'step%03d' % step)
                 train_writer.add_summary(train_summary, step)
                 print('Training Set Accuracy: %.2f' % train_acc)

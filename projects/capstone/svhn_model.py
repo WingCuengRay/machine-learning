@@ -8,9 +8,12 @@ NUM_LABELS = CL_NUM_LABELS + 1  # 0-9, + 1 blank
 
 # Hyper Parameters
 PATCH_SIZE = 5
-DEPTH_1 = 16
-DEPTH_2 = 32
-DEPTH_3 = 64
+DEPTH_1 = 48
+DEPTH_2 = 64
+DEPTH_3 = 128
+DEPTH_4 = 160
+LOCAL = 192
+
 num_hidden1 = 128
 DROPOUT = 0.85
 
@@ -18,24 +21,24 @@ DROPOUT = 0.85
 # Convolution Weight and Bias Variables
 conv1_weights = tf.get_variable("Weights_1", shape=[PATCH_SIZE, PATCH_SIZE,
                                 NUM_CHANNELS, DEPTH_1])
-conv1_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_1]), name='Biases_1')
+conv1_biases = tf.Variable(tf.constant(0.0, shape=[DEPTH_1]), name='Biases_1')
 
 conv2_weights = tf.get_variable("Weights_2", shape=[PATCH_SIZE, PATCH_SIZE,
                                 DEPTH_1, DEPTH_2])
-conv2_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_2]), name='Biases_2')
+conv2_biases = tf.Variable(tf.constant(0.1, shape=[DEPTH_2]), name='Biases_2')
 
 conv3_weights = tf.get_variable("Weights_3", shape=[PATCH_SIZE, PATCH_SIZE,
                                 DEPTH_2, DEPTH_3])
-conv3_biases = tf.Variable(tf.constant(1.0, shape=[DEPTH_3]), name='Biases_3')
-
+conv3_biases = tf.Variable(tf.constant(0.1, shape=[DEPTH_3]), name='Biases_3')
 
 conv4_weights = tf.get_variable("Weights_4", shape=[PATCH_SIZE,
                                 PATCH_SIZE, DEPTH_3, num_hidden1])
-conv4_biases = tf.Variable(tf.constant(1.0, shape=[num_hidden1]), name='Biases_4')
+conv4_biases = tf.Variable(tf.constant(0.1, shape=[num_hidden1]), name='Biases_4')
+
 
 # Regression Weight and Bias Variables
 reg1_weights = tf.get_variable("WS1", shape=[num_hidden1, NUM_LABELS])
-reg1_biases = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]), name='BS1')
+reg1_biases = tf.Variable(tf.constant(.0, shape=[NUM_LABELS]), name='BS1')
 
 reg2_weights = tf.get_variable("WS2", shape=[num_hidden1, NUM_LABELS])
 reg2_biases = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]), name='BS2')
@@ -51,8 +54,8 @@ reg5_biases = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]), name='BS5')
 
 # Classification Weight and Bias Variables
 
-cl_l3_weights = tf.get_variable("Classifer_Weights_1", shape=[64, 64])
-cl_l3_biases = tf.Variable(tf.constant(0.0, shape=[64]),
+cl_l3_weights = tf.get_variable("Classifer_Weights_1", shape=[128, 160])
+cl_l3_biases = tf.Variable(tf.constant(0.05, shape=[160]),
                            name='Classifer_Biases_1')
 
 # cl_l4_weights = tf.get_variable("Classifer_Weights_2", shape=[384, 192])
@@ -60,8 +63,8 @@ cl_l3_biases = tf.Variable(tf.constant(0.0, shape=[64]),
 #                            name='Classifer_Biases_2')
 
 cl_out_weights = tf.get_variable("Classifer_Weights_3",
-                                 shape=[64, CL_NUM_LABELS])
-cl_out_biases = tf.Variable(tf.constant(0.0, shape=[CL_NUM_LABELS]),
+                                 shape=[160, CL_NUM_LABELS])
+cl_out_biases = tf.Variable(tf.constant(0.05, shape=[CL_NUM_LABELS]),
                             name='Classifer_Biases_3')
 
 
@@ -76,22 +79,24 @@ def convolution_model(data):
         con = tf.nn.conv2d(data, conv1_weights,
                            [1, 1, 1, 1], 'VALID', name='C1')
         hid = tf.nn.relu(con + conv1_biases)
-        lrn = tf.nn.local_response_normalization(hid)
-        sub = tf.nn.max_pool(lrn,
-                             [1, 2, 2, 1], [1, 2, 2, 1], 'SAME', name='S2')
-        activation_summary(sub)
+        activation_summary(hid)
+
+    pol = tf.nn.max_pool(hid,
+                         [1, 2, 2, 1], [1, 2, 2, 1], 'SAME', name='S2')
+    lrn = tf.nn.local_response_normalization(pol)
 
     with tf.variable_scope('conv_2') as scope:
-        con = tf.nn.conv2d(sub, conv2_weights,
+        con = tf.nn.conv2d(lrn, conv2_weights,
                            [1, 1, 1, 1], padding='VALID', name='C3')
         hid = tf.nn.relu(con + conv2_biases)
-        lrn = tf.nn.local_response_normalization(hid)
-        sub = tf.nn.max_pool(lrn,
-                             [1, 2, 2, 1], [1, 2, 2, 1], 'SAME', name='S4')
-        activation_summary(sub)
+        activation_summary(hid)
+
+    pol = tf.nn.max_pool(hid,
+                         [1, 2, 2, 1], [1, 2, 2, 1], 'SAME', name='S4')
+    lrn = tf.nn.local_response_normalization(pol)
 
     with tf.variable_scope('conv_3') as scope:
-        con = tf.nn.conv2d(sub, conv3_weights,
+        con = tf.nn.conv2d(lrn, conv3_weights,
                            [1, 1, 1, 1], padding='VALID', name='C5')
         hid = tf.nn.relu(con + conv3_biases)
         lrn = tf.nn.local_response_normalization(hid)
@@ -118,7 +123,6 @@ def classification_head(data, keep_prob=1.0, train=False):
         fc_out = tf.nn.dropout(conv_layer, DROPOUT)
     else:
         print("Not using dropout")
-        #tf.scalar_summary('dropout_keep_probability', DROPOUT)
 
     # Fully Connected Layer 1
     with tf.variable_scope('fully_connected_1') as scope:
@@ -129,9 +133,9 @@ def classification_head(data, keep_prob=1.0, train=False):
 
     # Fully Connected Layer 2
     # with tf.variable_scope('fully_connected_2') as scope:
-    #   fc2 = tf.add(tf.matmul(fc_out, cl_l4_weights), cl_l4_biases)
-    #   fc2_out = tf.nn.relu(fc2, name=scope.name)
-    #   _activation_summary(fc2_out)
+    #     fc2 = tf.add(tf.matmul(fc_out, cl_l4_weights), cl_l4_biases)
+    #     fc2_out = tf.nn.relu(fc2, name=scope.name)
+    #     activation_summary(fc2_out)
 
     with tf.variable_scope("softmax_linear") as scope:
         logits = tf.matmul(fc_out, cl_out_weights) + cl_out_biases

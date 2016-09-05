@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from svhn_model import regression_head
 from svhn_data import load_svhn_data
+import time
 
 test_dataset, test_labels = load_svhn_data("test", "full")
 WEIGHTS_FILE = "regression.ckpt"
@@ -49,9 +50,11 @@ def detect(img_path, saved_model_weights):
 
         print "Initialized"
         feed_dict = {X: exp}
+        start_time = time.time()
         predictions = session.run(best_prediction, feed_dict=feed_dict)
         pred = prediction_to_string(predictions[0])
-        print "Best Prediction", pred
+        end_time = time.time()
+        print "Best Prediction", pred, "made in", end_time - start_time
 
 
 if __name__ == "__main__":
