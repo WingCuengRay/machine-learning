@@ -12,12 +12,10 @@ from svhn_data import load_svhn_data
 from svhn_model import regression_head
 
 from datetime import datetime
-from pdb import set_trace as bp
-
 
 # Run Options
 BATCH_SIZE = 32
-NUM_EPOCHS = 256
+NUM_EPOCHS = 128
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_regression_logs'
 
 # Image Settings
@@ -30,7 +28,7 @@ NUM_LABELS = 11
 LABELS_LEN = 6
 
 # LEARING RATE HYPER PARAMS
-LEARN_RATE = 0.1
+LEARN_RATE = 0.075
 DECAY_RATE = 0.95
 STAIRCASE = True
 

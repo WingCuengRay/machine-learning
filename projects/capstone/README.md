@@ -39,7 +39,7 @@ The full directory should contain two sub directories test and full which contai
 
 
 ##Step 2: Train your own models
-First train the classifer. The weights generated here will be resused in the training of the multi-digit reader.
+First train the classifer. The weights generated here will be resused in the training of the multi-digit reader.  Note this step may take some time depending of your hardware. Pre-trained models can be downloaded from here for the single digit reader [Single Digit Weights](https://s3.amazonaws.com/tensorflow-weights/classifier.ckpt), and here for the [Multi-Digit Weights](https://s3.amazonaws.com/tensorflow-weights/regression.ckpt).
 
 `python train_classifier.py`
 

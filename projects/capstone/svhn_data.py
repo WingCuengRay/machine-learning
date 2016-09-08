@@ -58,9 +58,11 @@ def convert_imgs_to_array(img_array):
     new_array = np.empty(shape=(num_imgs, rows, cols, chans), dtype=np.float32)
     for x in range(0, num_imgs):
         # TODO reuse normalize_img here
-        temp = img_array[:, :, :, x]
+        chans = img_array[:, :, :, x]
         # normalize pixels to 0 and 1. 0 is pure white, 1 is pure channel color
-        norm_vec = (255-temp)*1.0/255.0
+        norm_vec = (255-chans)*1.0/255.0
+        # Mean Subtraction
+        norm_vec -= np.mean(norm_vec, axis=0)
         new_array[x] = norm_vec
     return new_array
 
@@ -260,6 +262,7 @@ def create_img_array(file_name, top, left, height, width, out_height, out_width)
     pix = np.array(img)
 
     norm_pix = (255-pix)*1.0/255.0
+    norm_pix -= np.mean(norm_pix, axis=0)
     return norm_pix
 
 

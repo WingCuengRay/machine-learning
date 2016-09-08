@@ -21,16 +21,16 @@ NUM_CHANNELS = 3
 SAVE_FILE = "classifier.ckpt"
 
 BATCH_SIZE = 256
-NUM_EPOCHS = 256
+NUM_EPOCHS = 128
 
 # LEARING RATE HYPER PARAMS
-LEARN_RATE = 0.1
+LEARN_RATE = 0.075
 DECAY_RATE = 0.95
 STAIRCASE = True
 
 def prepare_log_dir():
     '''Clears the log files then creates new directories to place
-        the tensorbard log file.'''
+        the tensorbard log file.''' 
     if tf.gfile.Exists(TENSORBOARD_SUMMARIES_DIR):
         tf.gfile.DeleteRecursively(TENSORBOARD_SUMMARIES_DIR)
     tf.gfile.MakeDirs(TENSORBOARD_SUMMARIES_DIR)
