@@ -25,12 +25,16 @@ def prediction_to_string(pred_array):
 
 def detect(img_path, saved_model_weights):
     sample_img = Image.open(img_path)
+    sample_img = sample_img.resize([64,64])
     plt.imshow(sample_img)
     plt.show()
 
     pix = np.array(sample_img)
+    
     norm_pix = (255-pix)*1.0/255.0
+    norm_pix = norm_pix - np.mean(norm_pix, axis=0)
     exp = np.expand_dims(norm_pix, axis=0)
+    #exp = np.expand_dims(pix, axis=0)
 
     X = tf.placeholder(tf.float32, shape=(1, 64, 64, 3))
     [logits_1, logits_2, logits_3, logits_4, logits_5] = regression_head(X)
@@ -51,10 +55,12 @@ def detect(img_path, saved_model_weights):
         print "Initialized"
         feed_dict = {X: exp}
         start_time = time.time()
-        predictions = session.run(best_prediction, feed_dict=feed_dict)
+        predictions, pred_prob = session.run([best_prediction, predict], feed_dict=feed_dict)
         pred = prediction_to_string(predictions[0])
         end_time = time.time()
         print "Best Prediction", pred, "made in", end_time - start_time
+        print(predictions[0])
+        print(pred_prob)
 
 
 if __name__ == "__main__":
