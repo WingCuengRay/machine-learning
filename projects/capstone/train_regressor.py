@@ -1,3 +1,5 @@
+# -*- coding:utf8 -*-
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -16,6 +18,7 @@ from datetime import datetime
 # Run Options
 BATCH_SIZE = 32
 NUM_EPOCHS = 128
+#TENSORBOARD_SUMMARIES_DIR = '/home/ray/svhn_regression_logs'
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_regression_logs'
 
 # Image Settings
@@ -45,6 +48,8 @@ def fill_feed_dict(data, labels, x, y_, step):
     set_size = labels.shape[0]
     # Compute the offset of the current minibatch in the data.
     # Note that we could use better randomization across epochs.
+
+    # 根据 step 的递增，有规律（有序）地取不同的 BATCH
     offset = (step * BATCH_SIZE) % (set_size - BATCH_SIZE)
     batch_data = data[offset:(offset + BATCH_SIZE), ...]
     batch_labels = labels[offset:(offset + BATCH_SIZE)]
@@ -81,6 +86,7 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
     with tf.name_scope('train'):
         optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
+    # prediciton: [5 * N * NUM_LABELS]
     prediction = tf.pack([tf.nn.softmax(regression_head(images_placeholder)[0]),
                                 tf.nn.softmax(regression_head(images_placeholder)[1]),
                                 tf.nn.softmax(regression_head(images_placeholder)[2]),
@@ -94,6 +100,10 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
     # Create a local session to run the training.
     with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
         init_op = tf.initialize_all_variables()
+        # Run all the initializers to prepare the trainable parameters.
+        sess.run(init_op)
+
+        
         # Restore variables from disk.
         if(saved_weights_path):
             saver.restore(sess, saved_weights_path)
@@ -102,8 +112,7 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
         reader = tf.train.NewCheckpointReader("classifier.ckpt")
         reader.get_variable_to_shape_map()
 
-        # Run all the initializers to prepare the trainable parameters.
-        sess.run(init_op)
+        
 
         # Add histograms for trainable variables.
         for var in tf.trainable_variables():
@@ -111,10 +120,19 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
 
         with tf.name_scope('accuracy'):
             with tf.name_scope('correct_prediction'):
+                # transpose 的 perm 参数: [1,2,0] 代表将原来的第 1 维 transpose 到第　0　维
+                # 第 2　维 transpose　到第 1 维， ...
+
+                # best: [N * 11 * 5]
                 best = tf.transpose(prediction, [1, 2, 0])  # permute n_steps and batch_size
                 lb = tf.cast(labels_placeholder[:, 1:6], tf.int64)
+
+                # tf.argmax(best, 1) --> [N * 5] 每个位置最大概率的数字
+                # correct_prediction --> bool
                 correct_prediction = tf.equal(tf.argmax(best, 1), lb)
             with tf.name_scope('accuracy'):
+                # accuracy 计算的是每个数字的正确率
+                # 若要计算每个数字序列的正确率，则去掉后面的 .get_shape().as_list()[0]
                 accuracy = tf.reduce_sum(tf.cast(correct_prediction, tf.float32)) / prediction.get_shape().as_list()[1] / prediction.get_shape().as_list()[0]
             tf.scalar_summary('accuracy', accuracy)
 

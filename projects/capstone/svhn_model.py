@@ -1,3 +1,4 @@
+# -*- coding:utf8 -*-
 import tensorflow as tf
 from pdb import set_trace as bp
 
@@ -163,4 +164,5 @@ def regression_head(data, train=False):
         logits_4 = tf.matmul(reshape, reg4_weights) + reg4_biases
         logits_5 = tf.matmul(reshape, reg5_weights) + reg5_biases
 
+    # logits_x: [N * NUM_LABELS] = [N * 11]
     return [logits_1, logits_2, logits_3, logits_4, logits_5]
