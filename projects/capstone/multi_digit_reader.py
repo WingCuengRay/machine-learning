@@ -26,8 +26,8 @@ def prediction_to_string(pred_array):
 def detect(img_path, saved_model_weights):
     sample_img = Image.open(img_path)
     sample_img = sample_img.resize([64,64])
-    plt.imshow(sample_img)
-    plt.show()
+    #plt.imshow(sample_img)
+    #plt.show()
 
     pix = np.array(sample_img)
     

@@ -13,8 +13,8 @@ WEIGHTS_FILE = "classifier.ckpt"
 
 def detect(img_path, saved_model_weights):
     img = Image.open(img_path)
-    plt.imshow(img)
-    plt.show()
+    #plt.imshow(img)
+    #plt.show()
 
     # Load the previously saved model to load the vars into.
     X = tf.placeholder(tf.float32, shape=(1, 32, 32, 3))
@@ -29,13 +29,15 @@ def detect(img_path, saved_model_weights):
         saver.restore(sess, saved_model_weights)
         print("Model restored.")
 
-        pix = np.array(img)
-        exp = np.expand_dims(pix, axis=0)
+        pix = np.array(img.resize([32, 32]))
         norm_img = (255-pix)*1.0/255.0
+        norm_img -= np.mean(norm_img, axis=0)
+        exp = np.expand_dims(norm_img, axis=0)
 
         feed_dict = {X: exp}
         predictions = sess.run(prediction, feed_dict=feed_dict)
         print("Best Prediction is:", np.argmax(predictions))
+        print(predictions)
 
 if __name__ == "__main__":
     img_path = None
