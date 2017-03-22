@@ -1,3 +1,4 @@
+# -*- coding:utf8 -*-
 import sys
 import os
 import numpy as np
@@ -8,6 +9,8 @@ import matplotlib.pyplot as plt
 from svhn_model import regression_head
 from svhn_data import load_svhn_data
 import time
+import detect.localize as localize
+from detect.detect import Box
 
 test_dataset, test_labels = load_svhn_data("test", "full")
 WEIGHTS_FILE = "regression.ckpt"
@@ -23,11 +26,10 @@ def prediction_to_string(pred_array):
     return pred_str
 
 
-def detect(img_path, saved_model_weights):
-    sample_img = Image.open(img_path)
-    sample_img = sample_img.resize([64,64])
-    #plt.imshow(sample_img)
-    #plt.show()
+def detect(img, saved_model_weights):
+    sample_img = img.resize([64,64])
+    plt.imshow(sample_img)
+    plt.show()
 
     pix = np.array(sample_img)
     
@@ -63,7 +65,7 @@ def detect(img_path, saved_model_weights):
         print(pred_prob)
 
 
-if __name__ == "__main__":
+def original_main():
     img_path = None
     if len(sys.argv) > 1:
         print("Reading Image file:", sys.argv[1])
@@ -77,4 +79,45 @@ if __name__ == "__main__":
         saved_model_weights = WEIGHTS_FILE
     else:
         raise IOError("Cannot find checkpoint file. Please run train_regressor.py")
-    detect(img_path, saved_model_weights)
+    img = Image.open(img_path)
+    detect(img, saved_model_weights)
+
+
+# @func: 按照 box 中坐标指定的 area 裁剪图片
+# @param: filename - 图片路径
+#         box - 矩形区域的坐标信息
+# @return: 裁剪后的图片
+def crop_img(filename, box):
+    img = Image.open(filename)
+    left = int(box.left - box.width*0.1)
+    right = int(box.left + box.width*1.1)
+    top = int(box.top - box.height*0.1)
+    bottom = int(box.top + box.height*1.1)
+
+    img = img.crop((left, top, right, bottom))
+    return img
+
+
+def main_with_detect():
+    if len(sys.argv) != 2:
+        print('Format: python' + sys.argv[0] + 'filePath')
+        exit()
+
+    ratios = [0.5, 1]
+    #ratios = [1, 2]
+    ret_digit = localize.localize(sys.argv[1], ratios)
+    ret_area = localize.mergeAllAreas(ret_digit)
+    #show_image(sys.argv[1], [ret_area])
+
+    img = crop_img(sys.argv[1], ret_area)
+    if os.path.isfile(WEIGHTS_FILE):
+        saved_model_weights = WEIGHTS_FILE
+    else:
+        raise IOError("Cannot find checkpoint file. Please run train_regressor.py")  
+    detect(img, saved_model_weights)
+
+
+
+if __name__ == "__main__":
+    #original_main()
+    main_with_detect()
