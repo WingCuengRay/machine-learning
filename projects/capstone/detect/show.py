@@ -41,27 +41,6 @@ def show_image(imgfile, digit_area):
 	plt.show()
 
 
-# @func: 合并所有的数字区域
-# @para: digit_boxs - 由一个或多个数字区域(Box)组成的列表
-# @return: 合并后的一个大的包含全部数字的矩形区域
-def mergeAllAreas(digit_boxes):
-	min_left = 99999
-	min_top = 99999
-	max_right = 0
-	max_bottom = 0
-	for each_box in digit_boxes:
-		if min_left > each_box.left:
-			min_left = each_box.left
-		if min_top > each_box.top:
-			min_top = each_box.top
-
-		if max_right < each_box.right():
-			max_right =  each_box.right()
-		if max_bottom < each_box.bottom():
-			max_bottom = each_box.bottom()
-
-	return Box(min_left, min_top, max_right-min_left, max_bottom-min_top)
-
 
 
 def main():
@@ -70,8 +49,6 @@ def main():
 		exit()
 
 	ret_digit = localize(sys.argv[1], RATIOS)
-	#ret_area = mergeAllAreas(ret_digit)
-	#show_image(sys.argv[1], [ret_area])
 	show_image(sys.argv[1], ret_digit)
 	
 	

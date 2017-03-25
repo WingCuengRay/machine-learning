@@ -9,8 +9,10 @@ import matplotlib.pyplot as plt
 from svhn_model import regression_head
 from svhn_data import load_svhn_data
 import time
-import detect.localize as localize
+from detect.show import show_image
 from detect.detect import Box
+from detect.detect import mergeAllAreas
+from detect.detect import localize
 
 test_dataset, test_labels = load_svhn_data("test", "full")
 WEIGHTS_FILE = "regression.ckpt"
@@ -65,6 +67,21 @@ def detect(img, saved_model_weights):
         print(pred_prob)
 
 
+# @func: 按照 box 中坐标指定的 area 裁剪图片
+# @param: filename - 图片路径
+#         box - 矩形区域的坐标信息
+# @return: 裁剪后的图片
+def crop_img(filename, box):
+    img = Image.open(filename)
+    left = int(box.left - box.width*0.1)
+    right = int(box.left + box.width*1.1)
+    top = int(box.top - box.height*0.1)
+    bottom = int(box.top + box.height*1.1)
+
+    img = img.crop((left, top, right, bottom))
+    return img
+
+
 def original_main():
     img_path = None
     if len(sys.argv) > 1:
@@ -83,21 +100,6 @@ def original_main():
     detect(img, saved_model_weights)
 
 
-# @func: 按照 box 中坐标指定的 area 裁剪图片
-# @param: filename - 图片路径
-#         box - 矩形区域的坐标信息
-# @return: 裁剪后的图片
-def crop_img(filename, box):
-    img = Image.open(filename)
-    left = int(box.left - box.width*0.1)
-    right = int(box.left + box.width*1.1)
-    top = int(box.top - box.height*0.1)
-    bottom = int(box.top + box.height*1.1)
-
-    img = img.crop((left, top, right, bottom))
-    return img
-
-
 def main_with_detect():
     if len(sys.argv) != 2:
         print('Format: python' + sys.argv[0] + 'filePath')
@@ -105,11 +107,10 @@ def main_with_detect():
 
     ratios = [0.5, 1]
     #ratios = [1, 2]
-    ret_digit = localize.localize(sys.argv[1], ratios)
-    ret_area = localize.mergeAllAreas(ret_digit)
-    #show_image(sys.argv[1], [ret_area])
+    ret_digit = localize(sys.argv[1], ratios)
+    show_image(sys.argv[1], ret_digit)
 
-    img = crop_img(sys.argv[1], ret_area)
+    img = crop_img(sys.argv[1], ret_digit[0])
     if os.path.isfile(WEIGHTS_FILE):
         saved_model_weights = WEIGHTS_FILE
     else:

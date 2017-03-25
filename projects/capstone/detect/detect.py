@@ -156,6 +156,87 @@ def cluster(filter_digits):
 	return combined_digits, confidence
 
 
+# @func: 合并所有的数字区域
+# @para: digit_boxs - 由一个或多个数字区域(Box)组成的列表
+# @return: 合并后的一个大的包含全部数字的矩形区域
+def mergeAllAreas(digit_boxes):
+	min_left = 99999
+	min_top = 99999
+	max_right = 0
+	max_bottom = 0
+	for each_box in digit_boxes:
+		if min_left > each_box.left:
+			min_left = each_box.left
+		if min_top > each_box.top:
+			min_top = each_box.top
+
+		if max_right < each_box.right():
+			max_right =  each_box.right()
+		if max_bottom < each_box.bottom():
+			max_bottom = each_box.bottom()
+
+	return Box(min_left, min_top, max_right-min_left, max_bottom-min_top)
+
+# @func: 判断两个 area 是否接近
+# @param:
+#		box1 - 区域 1
+#		box2 - 区域 2
+#		x_margin - x轴允许的最大间隔
+#		y_margin - y轴允许的最大间隔
+# @pre-condition: box1.left 比 box2.left 小
+# @return: bool
+# 该函数目前有 Bug! 如果数字是垂直排列的话值错误可能性大大增加
+def IsNearby(box1, box2, x_margin, y_margin):
+	# to be continued
+	overlap = Overlap(box1, box2)
+	if overlap.width*overlap.height != 0:
+		return True
+
+	# 如果 x 轴上的距离大于最大间隔
+	if box2.left-box1.right() > x_margin:
+		return False
+
+	# 如果 y 轴上的距离大于最大间隔　－　由两种情况：box1　在上方和　box2　在上方
+	top = max(box1.top, box2.top)
+	bottom = min(box1.bottom(), box2.bottom())
+	if top-bottom > y_margin:	# 如果 top-bottom > 0，则代表两者在 y　方向上不可能重叠
+		return False
+
+	return True
+
+
+# @func: 得到包含了所有数字的矩形区域
+# @param: 经过过滤的单个数字区域组成的列表
+#　@return: 
+#		combined_digits : 区域矩阵组成的列表
+#		confidence      : 置信度
+# @pre-condition: 参数经过过滤与排序
+def Union(filter_digits):
+	length = len(filter_digits)
+	cc = 1
+	combined_digits = []
+	confidence = []
+
+	i = 0
+	while i<length:
+		cc = 1
+		tmp = filter_digits[i]
+
+		j = i+1
+		while j < length:
+			if IsNearby(tmp, filter_digits[j], 20, 0) == True:
+				tmp = mergeAllAreas([tmp, filter_digits[j]])
+				cc = cc+1
+				j = j+1
+			else:
+				break	
+		combined_digits.append(tmp)
+		confidence.append(cc)
+		i = j
+
+	return combined_digits, confidence
+
+
 # @func: 将 cluster 之后的所有区域按照 confidence 的值从小到大排序
 # @param: digits -- 合并之后的可能存在数字的区域
 #		  confidence -- 重合率，每个元素与 digits 的每个元素对应。
@@ -189,8 +270,6 @@ def getDigitArea(cascade_list, img, enlarge, ratios):
 		img_scale.append(tmp_img)
 
 		for i in range(10):
-			#digits = cascade_list[i].detectMultiScale(img_scale[k], 1.1, 3, 
-			#	0|cv2.CV_HAAR_SCALE_IMAGE, [20,30], [400, 600])
 			digits = cascade_list[i].detectMultiScale(img_scale[k], 1.1, 3,
 				0, (20,30), (400, 600))
 
@@ -202,12 +281,15 @@ def getDigitArea(cascade_list, img, enlarge, ratios):
 				all_digits.append(Box(int(curr_x), int(curr_y), \
 									int(curr_width), int(curr_height)))
 	#　按每个　area　的 x　轴的中心点排序
-	all_digits = sorted(all_digits, key=lambda each_digit : (each_digit.left+each_digit.width/2))
+	#all_digits = sorted(all_digits, key=lambda each_digit : (each_digit.left+each_digit.width/2))
+	all_digits = sorted(all_digits, key=lambda each_digit : (each_digit.left))
 
 	if(len(all_digits) > 0):
 		filter_digits = area_filter(all_digits)
-		cluster_digit, confidence = cluster(filter_digits)
+		cluster_digit, confidence = Union(filter_digits)
+		#cluster_digit, confidence = cluster(filter_digits)
 		ret_digits = sortByConfidence(cluster_digit, confidence, MAX_NUM)
+		print(ret_digits[0].left, ret_digits[0].top)
 		return ret_digits
 
 	else:
