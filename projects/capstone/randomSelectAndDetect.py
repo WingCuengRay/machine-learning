@@ -105,7 +105,7 @@ def Recognition(files, saved_model_weights):
 
     X = tf.placeholder(tf.float32, shape=(files.shape[0], 64, 64, 3))
     [logits_1, logits_2, logits_3, logits_4, logits_5] = regression_head(X)
-    predict = tf.pack([tf.nn.softmax(logits_1),
+    predict = tf.stack([tf.nn.softmax(logits_1),
                       tf.nn.softmax(logits_2),
                       tf.nn.softmax(logits_3),
                       tf.nn.softmax(logits_4),
