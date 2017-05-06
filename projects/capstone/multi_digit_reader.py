@@ -102,11 +102,13 @@ def original_main():
 
 def main_with_detect():
     if len(sys.argv) != 2:
-        print('Format: python' + sys.argv[0] + 'filePath')
+        print('Format: python ' + sys.argv[0] + ' filePath')
         exit()
 
-    ratios = [0.5, 1]
-    #ratios = [1, 2]
+    #ratios = [0.5, 1]
+    #ratios = [1, 1.5, 1.75]
+    ratios = [1, 2]
+    #ratios = [1, 2, 1.25, 1.5, 1.75]
     ret_digit = localize(sys.argv[1], ratios)
     show_image(sys.argv[1], ret_digit)
 
