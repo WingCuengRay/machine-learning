@@ -9,6 +9,7 @@ import numpy as np
 import sys
 import os
 import tensorflow as tf
+import random
 
 from svhn_data import load_svhn_data
 from svhn_model import regression_head
@@ -16,8 +17,8 @@ from svhn_model import regression_head
 from datetime import datetime
 
 # Run Options
-BATCH_SIZE = 32
-NUM_EPOCHS = 128
+BATCH_SIZE = 64
+NUM_EPOCHS = 128        # EPOCH　代表整个数据集被重复训练的多少次
 #TENSORBOARD_SUMMARIES_DIR = '/home/ray/svhn_regression_logs'
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_regression_logs'
 
@@ -43,7 +44,7 @@ def prepare_log_dir():
         tf.gfile.DeleteRecursively(TENSORBOARD_SUMMARIES_DIR)
     tf.gfile.MakeDirs(TENSORBOARD_SUMMARIES_DIR)
 
-
+'''
 def fill_feed_dict(data, labels, x, y_, step):
     set_size = labels.shape[0]
     # Compute the offset of the current minibatch in the data.
@@ -54,6 +55,15 @@ def fill_feed_dict(data, labels, x, y_, step):
     batch_data = data[offset:(offset + BATCH_SIZE), ...]
     batch_labels = labels[offset:(offset + BATCH_SIZE)]
     return {x: batch_data, y_: batch_labels}
+'''
+def fill_feed_dict(data, labels, x, y_, step):
+    set_size = labels.shape[0]
+    offset = random.randint(0, set_size-BATCH_SIZE)
+
+    batch_data = data[offset:(offset+BATCH_SIZE), ...]
+    batch_labels = labels[offset:(offset+BATCH_SIZE)]
+
+    return {x:batch_data, y_:batch_labels}
 
 
 def train_regressor(train_data, train_labels, valid_data, valid_labels,
@@ -98,7 +108,7 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
 
     start_time = time.time()
     # Create a local session to run the training.
-    with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
+    with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
         init_op = tf.initialize_all_variables()
         # Run all the initializers to prepare the trainable parameters.
         sess.run(init_op)
@@ -109,10 +119,8 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
             saver.restore(sess, saved_weights_path)
         print("Model restored.")
 
-        reader = tf.train.NewCheckpointReader("classifier.ckpt")
-        reader.get_variable_to_shape_map()
-
-        
+        #reader = tf.train.NewCheckpointReader("classifier.ckpt")
+        #reader.get_variable_to_shape_map()
 
         # Add histograms for trainable variables.
         for var in tf.trainable_variables():
@@ -133,6 +141,7 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
             with tf.name_scope('accuracy'):
                 # accuracy 计算的是每个数字的正确率
                 # 若要计算每个数字序列的正确率，则去掉后面的 .get_shape().as_list()[0]
+                # 相当于 sum(correct_prediction) / (prediction.shape[1]*prediction.shape[0])
                 accuracy = tf.reduce_sum(tf.cast(correct_prediction, tf.float32)) / prediction.get_shape().as_list()[1] / prediction.get_shape().as_list()[0]
             tf.scalar_summary('accuracy', accuracy)
 
@@ -140,61 +149,84 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
         merged = tf.merge_all_summaries()
         train_writer = tf.train.SummaryWriter(TENSORBOARD_SUMMARIES_DIR + '/train', sess.graph)
         valid_writer = tf.train.SummaryWriter(TENSORBOARD_SUMMARIES_DIR + '/validation')
+        test_writer = tf.train.SummaryWriter(TENSORBOARD_SUMMARIES_DIR + '/test')
 
         run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_metadata = tf.RunMetadata()
 
-        # Loop through training steps.
-        for step in xrange(int(NUM_EPOCHS * train_size) // BATCH_SIZE):
-            duration = time.time() - start_time
-            examples_per_sec = BATCH_SIZE / duration
+        try:
+            # Loop through training steps.
+            print("Start training...")
+            for step in xrange(int(NUM_EPOCHS * train_size) // BATCH_SIZE):
+                duration = time.time() - start_time
+                examples_per_sec = BATCH_SIZE / duration
 
-            # Run the graph and fetch some of the nodes.
-            # This dictionary maps the batch data (as a numpy array) to the
-            train_feed_dict = fill_feed_dict(train_data, train_labels, images_placeholder, labels_placeholder, step)
-            _, l, lr, acc, predictions = sess.run([optimizer, loss, learning_rate,
-                                                  accuracy, prediction],
-                                                  feed_dict=train_feed_dict)
+                # Run the graph and fetch some of the nodes.
+                # This dictionary maps the batch data (as a numpy array) to the
+                train_feed_dict = fill_feed_dict(train_data, train_labels, images_placeholder, labels_placeholder, step)
+                _, l, lr, acc, predictions = sess.run([optimizer, loss, learning_rate,
+                                                      accuracy, prediction],
+                                                      feed_dict=train_feed_dict)
 
-            train_batched_labels = train_feed_dict.values()[1]
+                train_batched_labels = train_feed_dict.values()[1]
 
-            if step % 1000 == 0:
-                valid_feed_dict = fill_feed_dict(valid_data, valid_labels, images_placeholder, labels_placeholder, step)
-                valid_batch_labels = valid_feed_dict.values()[1]
+                if step % 1000 == 0:
+                    # Validation set
+                    valid_feed_dict = fill_feed_dict(valid_data, valid_labels, images_placeholder, labels_placeholder, step)
+                    valid_batch_labels = valid_feed_dict.values()[1]
 
-                valid_summary, _, l, lr, valid_acc = sess.run([merged, optimizer, loss, learning_rate, accuracy],
-                feed_dict=valid_feed_dict, options=run_options, run_metadata=run_metadata)
-                print('Validation Accuracy: %.2f' % valid_acc)
-                valid_writer.add_run_metadata(run_metadata, 'step%03d' % step)
-                valid_writer.add_summary(valid_summary, step)
+                    valid_summary, _, l, lr, valid_acc = sess.run([merged, optimizer, loss, learning_rate, accuracy],
+                    feed_dict=valid_feed_dict, options=run_options, run_metadata=run_metadata)
+                    print('Validation Accuracy: %.2f' % valid_acc)
+                    valid_writer.add_run_metadata(run_metadata, 'step%03d' % step)
+                    valid_writer.add_summary(valid_summary, step)
 
-                train_summary, _, l, lr, train_acc = sess.run([merged, optimizer, loss, learning_rate, accuracy],
-                    feed_dict=train_feed_dict)
-                train_writer.add_run_metadata(run_metadata, 'step%03d' % step)
-                train_writer.add_summary(train_summary, step)
-                print('Training Set Accuracy: %.2f' % train_acc)
-                print('Adding run metadata for', step)
+                    # Test set
+                    test_feed_dict = fill_feed_dict(test_data, test_labels, images_placeholder, labels_placeholder, step)
+                    test_summary, _, l, lr, test_acc = sess.run([merged, optimizer, loss, learning_rate, accuracy],
+                    feed_dict=test_feed_dict, options=run_options, run_metadata=run_metadata)
+                    print('Test Accuracy: %.2f' % test_acc)
+                    test_writer.add_run_metadata(run_metadata, 'step%03d' % step)
+                    test_writer.add_summary(test_summary, step)
 
-            elif step % 100 == 0:
-                elapsed_time = time.time() - start_time
-                start_time = time.time()
+                    # Training set
+                    train_summary, _, l, lr, train_acc = sess.run([merged, optimizer, loss, learning_rate, accuracy],
+                        feed_dict=train_feed_dict)
+                    train_writer.add_run_metadata(run_metadata, 'step%03d' % step)
+                    train_writer.add_summary(train_summary, step)
+                    print('Training Set Accuracy: %.2f' % train_acc)
+                    print('Adding run metadata for', step)
 
-                format_str = ('%s: step %d, loss = %.2f  learning rate = %.2f  (%.1f examples/sec; %.3f ''sec/batch)')
-                print (format_str % (datetime.now(), step, l, lr, examples_per_sec, duration))
 
-                print('Minibatch accuracy2: %.2f' % acc)
-                sys.stdout.flush()
+                elif step % 100 == 0:
+                    elapsed_time = time.time() - start_time
+                    start_time = time.time()
 
-        test_feed_dict = fill_feed_dict(test_data, test_labels, images_placeholder, labels_placeholder, step)
-        _, l, lr, test_acc = sess.run([optimizer, loss, learning_rate, accuracy], feed_dict=test_feed_dict, options=run_options, run_metadata=run_metadata)
-        print('Test accuracy: %.2f' % test_acc)
+                    format_str = ('%s: step %d, loss = %.2f  learning rate = %.2f  (%.1f examples/sec; %.3f ''sec/batch)')
+                    print (format_str % (datetime.now(), step, l, lr, examples_per_sec, duration))
 
-        # Save the variables to disk.
-        save_path = saver.save(sess, "regression.ckpt")
-        print("Model saved in file: %s" % save_path)
+                    print('Minibatch accuracy2: %.2f' % acc)
+                    sys.stdout.flush()
 
-        train_writer.close()
-        valid_writer.close()
+            test_feed_dict = fill_feed_dict(test_data, test_labels, images_placeholder, labels_placeholder, step)
+            _, l, lr, test_acc = sess.run([optimizer, loss, learning_rate, accuracy], feed_dict=test_feed_dict, options=run_options, run_metadata=run_metadata)
+            print('Test accuracy: %.2f' % test_acc)
+
+            # Save the variables to disk.
+            save_path = saver.save(sess, "regression.ckpt")
+            print("Model saved in file: %s" % save_path)
+
+            train_writer.close()
+            valid_writer.close()
+            test_writer.close()
+
+        except KeyboardInterrupt:
+            save_path = saver.save(sess, "regression.ckpt")
+            print("Model saved in file: %s" % save_path)
+            train_writer.close()
+            valid_writer.close()
+            test_writer.close()
+
 
 
 def main(saved_weights_path):
