@@ -17,7 +17,7 @@ from svhn_model import regression_head
 from datetime import datetime
 
 # Run Options
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 NUM_EPOCHS = 128        # EPOCH　代表整个数据集被重复训练的多少次
 #TENSORBOARD_SUMMARIES_DIR = '/home/ray/svhn_regression_logs'
 TENSORBOARD_SUMMARIES_DIR = '/tmp/svhn_regression_logs'
@@ -58,10 +58,13 @@ def fill_feed_dict(data, labels, x, y_, step):
 '''
 def fill_feed_dict(data, labels, x, y_, step):
     set_size = labels.shape[0]
-    offset = random.randint(0, set_size-BATCH_SIZE)
+    idxs = random.sample(range(set_size), BATCH_SIZE)
+    #offset = random.randint(0, set_size-BATCH_SIZE)
 
-    batch_data = data[offset:(offset+BATCH_SIZE), ...]
-    batch_labels = labels[offset:(offset+BATCH_SIZE)]
+    #batch_data = data[offset:(offset+BATCH_SIZE), ...]
+    #batch_labels = labels[offset:(offset+BATCH_SIZE)]
+    batch_data = data[idxs, ...]
+    batch_labels = labels[idxs]
 
     return {x:batch_data, y_:batch_labels}
 
@@ -133,16 +136,24 @@ def train_regressor(train_data, train_labels, valid_data, valid_labels,
 
                 # best: [N * 11 * 5]
                 best = tf.transpose(prediction, [1, 2, 0])  # permute n_steps and batch_size
-                lb = tf.cast(labels_placeholder[:, 1:6], tf.int64)
+                lb = tf.cast(labels_placeholder[:, 1:6], tf.int64)  # lb: [N*5]
 
                 # tf.argmax(best, 1) --> [N * 5] 每个位置最大概率的数字
-                # correct_prediction --> bool
+                # correct_prediction --> [N * 5] --> bool
                 correct_prediction = tf.equal(tf.argmax(best, 1), lb)
+
             with tf.name_scope('accuracy'):
                 # accuracy 计算的是每个数字的正确率
                 # 若要计算每个数字序列的正确率，则去掉后面的 .get_shape().as_list()[0]
                 # 相当于 sum(correct_prediction) / (prediction.shape[1]*prediction.shape[0])
-                accuracy = tf.reduce_sum(tf.cast(correct_prediction, tf.float32)) / prediction.get_shape().as_list()[1] / prediction.get_shape().as_list()[0]
+                # accuracy = tf.reduce_sum(tf.cast(correct_prediction, tf.float32)) / prediction.get_shape().as_list()[1] / prediction.get_shape().as_list()[0]
+
+                # [N * 1]
+                cnt = tf.reduce_sum(tf.cast(correct_prediction, tf.float32), 1)
+                result = tf.equal(cnt, 5)           # [N * 1] --> bool
+                accuracy = tf.reduce_sum(tf.cast(result, tf.float32)) / result.get_shape().as_list()[0]
+
+
             tf.summary.scalar('accuracy', accuracy)
 
         # Prepare vairables for the tensorboard
